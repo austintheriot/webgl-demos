@@ -1,5 +1,3 @@
-import ObjFileParser from 'obj-file-parser';
-
 const main = async () => {
   const WIDTH = 1000;
   const HEIGHT = 1000;
@@ -16,18 +14,27 @@ const main = async () => {
 
   const pixels = new Uint8ClampedArray(ARRAY_LENGTH);
 
-  for (let i = 0; i < ARRAY_LENGTH; i += BPP) {
-    pixels[i + 3] = 255;
+  type Color = [r: number, g: number, b: number, a: number];
+  type Point = {
+    x: number,
+    y: number,
+    z?: number,
   }
 
-  type Color = [r: number, g: number, b: number, a: number];
+  const WHITE: Color = [255, 255, 255, 255];
+  const RED: Color = [200, 0, 0, 255];
+  const GREEN: Color = [0, 200, 0, 255];
+  const BLUE: Color = [0, 0, 200, 255];
+  const BLACK: Color = [0, 0, 0, 255];
 
-  const setPixel = (x: number, y: number, color: Color) => {
+  const drawPixel = (x: number, y: number, color: Color) => {
     const index = (Math.trunc(y) * WIDTH * BPP) + (Math.trunc(x) * BPP);
     color.forEach((byte, i) => pixels[index + i] = byte);
   }
 
-  const drawLine = (x0: number, y0: number, x1: number, y1: number, color: Color) => {
+  type ForEachPointCallBack = (x: number, y: number, color: Color) => void;
+
+  const iterateThroughPoints = (x0: number, y0: number, x1: number, y1: number, color: Color, cb: ForEachPointCallBack) => {
     let steep = false;
     // if line is sleep, calculate by iterating through y instead of x
     if (Math.abs(y1 - y0) > Math.abs(x1 - x0)) {
@@ -50,42 +57,135 @@ const main = async () => {
       y1 = y0;
       y0 = temp2;
     }
-    const slope = (y1 - y0) / (x1 - x0);
-    for (let x = Math.trunc(x0); x <= x1; x += 1) {
-      const y = Math.trunc(slope * (x - x0) + y0);
+
+    // ---------------- USING SLOPE:
+    // const slope = (y1 - y0) / (x1 - x0);
+    // for (let x = Math.trunc(x0); x <= x1; x += 1) {
+    //   const y = Math.trunc(slope * (x - x0) + y0);
+
+    //   // if line is steep, switch x and y back to their normal positions when drawing:
+    //   if (steep) cb(y, x, color);
+    //   else cb(x, y, color);
+    // }
+
+
+     // ---------------- USING PERCENT COMPLETE:
+    // for (let x = Math.trunc(x0); x <= x1; x += 1) {
+    //   const xPctComplete = (x - x0) / (x1 - x0);
+    //   const y = (xPctComplete * (y1 - y0)) + y0;
+
+    //   // if line is steep, switch x and y back to their normal positions when drawing:
+    //   if (steep) cb(y, x, color);
+    //   else cb(x, y, color);
+    // }
+
+     // ---------------- USING PERCENT LEFT TO COMPLETE:
+     for (let x = Math.trunc(x0); x <= x1; x += 1) {
+       const xPctComplete = (x - x0) / (x1 - x0);
+       const yPctLeft = 1 - xPctComplete;
+       const y = y1 - (yPctLeft * (y1 - y0));
 
       // if line is steep, switch x and y back to their normal positions when drawing:
-      if (steep) setPixel(y, x, color);
-      else setPixel(x, y, color);
+      if (steep) cb(y, x, color);
+      else cb(x, y, color);
     }
   }
 
-  const model = await (await fetch('./model.obj')).text()
-  const [parsedModel] = new ObjFileParser(model).parse().models;
-  console.log({ model, parsedModel });
+  const drawLine = (x0: number, y0: number, x1: number, y1: number, color: Color) => {
+    iterateThroughPoints(x0, y0, x1, y1, color, drawPixel);
+  }
 
-  parsedModel.faces.forEach((face) => {
-    const vertices = face.vertices
-      // .obj files start index at 1
-      .map((vertex) => vertex.vertexIndex - 1)
-      // convert vertexIndex to vertex coords
-      .map((vertexIndex) => parsedModel.vertices[vertexIndex]);
-   
-    // draw lines between each vertex
-    for (let i = 0; i < 3; i++) {
-      const v0 = vertices[i];
-      const v1 = vertices[(i + 1) % 3];
+  drawLine(50, 100, 800, 700, BLACK);
 
-      // map (-1, 1) -> (0, 1)
-      const x0 = ((v0.x + 1) / 2) * WIDTH;
-      const y0 = ((v0.y + 1) / 2) * HEIGHT;
-      const x1 = ((v1.x + 1) / 2) * WIDTH;
-      const y1 = ((v1.y + 1) / 2) * HEIGHT;
+  const drawTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
+    drawLine(p0.x, p0.y, p1.x, p1.y, color);
+    drawLine(p1.x, p1.y, p2.x, p2.y, color);
+    drawLine(p2.x, p2.y, p0.x, p0.y, color);
+  }
 
-      drawLine(x0, y0, x1, y1, [255, 255, 255, 100]);
+  drawTriangle({ x: 100, y: 200 }, { x: 200, y: 300 }, { x: 50, y: 750 }, BLACK);
+  drawTriangle({ x: 900, y: 780 }, { x: 700, y: 500 }, { x: 400, y: 800 }, RED);
+  drawTriangle({ x: 100, y: 200 }, { x: 200, y: 300 }, { x: 50, y: 750 }, BLACK);
+
+  // my initial implementation: produces artifacts from drawing diagonal lines
+  const _drawFilledTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
+    const vertexes = [p0, p1, p2];
+    // sort by y-coordinates: greatest -> least
+    vertexes.sort((a, b) => b.y - a.y);
+    const [left, right, bottom] = vertexes[0].x < vertexes[1].x ? [vertexes[0], vertexes[1], vertexes[2]] : [vertexes[1], vertexes[0], vertexes[2]];
+    const leftPoints: Point[] = [];
+    const rightPoints: Point[] = [];
+    iterateThroughPoints(left.x, left.y, bottom.x, bottom.y, color, (x, y) => leftPoints.push({ x, y }));
+    iterateThroughPoints(right.x, right.y, bottom.x, bottom.y, color, (x, y) => rightPoints.push({ x, y }));
+
+    // the line may iterate in any direction, so we should 
+    // make sure the lines are in the correct up-down direction before we iterate
+    leftPoints.sort((a, b) => a.y - b.y);
+    rightPoints.sort((a, b) => a.y - b.y);
+
+    let leftI = 0;
+    let rightI = 0;
+    while (leftI < leftPoints.length && rightI < rightPoints.length) {
+      const leftPoint = leftPoints[leftI];
+      const rightPoint = rightPoints[rightI];
+      drawLine(leftPoint.x, leftPoint.y, rightPoint.x, rightPoint.y, color);
+      
+      // increment the index that still has further to go
+      if ((leftI / leftPoints.length) < (rightI / rightPoints.length)) {
+        leftI++
+      } else {
+        rightI++
+      }
     }
-  });
+  }
 
+  // triangle in two halves by only filling in lines horizontally
+  const drawFilledTriangle = (t0: Point, t1: Point, t2: Point, color: Color) => {
+    drawTriangle(t0, t1, t2, color);
+
+    // iterate from bottom to 
+    const vertexes = [t0, t1, t2];
+    // sort by y-coordinates: least -> greatest
+    vertexes.sort((a, b) => a.y - b.y);
+    [t0, t1, t2] = vertexes;
+
+    // bottom half of the triangle
+    const totalHeight = t2.y - t0.y;
+    for (let y = t0.y; y <= t1.y; y++) {
+      const bottomHalfHeight = t1.y - t0.y;
+      const pctYCompleteTo1 = (y - t0.y) / bottomHalfHeight;
+      const pctYCompleteTo2 = (y - t0.y) / totalHeight;
+
+      // when you are n% away from y, you are also guaranteed to be n% away from x
+      let x1 = t0.x + ((t1.x - t0.x) * pctYCompleteTo1);
+      let x2 = t0.x + ((t2.x - t0.x) * pctYCompleteTo2);
+
+      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
+      for (let x = x1; x <= x2; x++){
+        drawPixel(x, y, color);
+      }
+    }
+
+     // top half of the triangle
+    for (let y = t1.y; y <= t2.y; y++) {
+      const topHalfHeight = (t2.y - t1.y);
+      const pctYCompleteFromT1 = (y - t1.y) / topHalfHeight;
+      const pctYCompleteFromT0 = (y - t0.y) / totalHeight;
+
+      // when you are n% away from y, you are also guaranteed to be n% away from x
+      let x1 = t0.x + ((t2.x - t0.x) * pctYCompleteFromT0);
+      let x2 = t1.x + ((t2.x - t1.x) * pctYCompleteFromT1);
+
+      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
+      for (let x = x1; x <= x2; x++){
+        drawPixel(x, y, color);
+      }
+    }
+  }
+
+  drawFilledTriangle({ x: 20, y: 20 }, { x: 50, y: 800 }, { x: 700, y: 500}, GREEN);
+  drawFilledTriangle({ x: 930, y: 20 }, { x: 500, y: 200 }, { x: 700, y: 500}, BLUE);
+  drawFilledTriangle({ x: 930, y: 20 }, { x: 850, y: 950}, { x: 700, y: 500}, RED);
 
   // convert plain array into array of unsigned 32-bit integers
   const imageData = ctx.createImageData(WIDTH, HEIGHT);

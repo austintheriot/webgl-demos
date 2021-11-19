@@ -12,6 +12,7 @@
       justify-content: center;
       margin: 0;
       position: 'relative';
+      background-color: lightblue;
     }
 
     canvas {
@@ -19,10 +20,7 @@
       max-width: 1000px;
       object-fit: contain;
       transform: scaleY(-1);
-
-      /* default is to smooth edges of pixels on canvas */
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
+      background-color: white;
     }
   </style>
   <script src="./main.ts" defer type="module"></script>

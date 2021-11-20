@@ -1,3 +1,5 @@
+import ObjFileParser from 'obj-file-parser';
+
 const main = async () => {
   const WIDTH = 1000;
   const HEIGHT = 1000;
@@ -76,7 +78,7 @@ const main = async () => {
       else drawPixel(x, y, color);
     }
 
-     // ---------------- USING PERCENT LEFT TO COMPLETE:
+    // ---------------- USING PERCENT LEFT TO COMPLETE:
     //  for (let x = Math.trunc(x0); x <= x1; x += 1) {
     //    const xPctComplete = (x - x0) / (x1 - x0);
     //    const yPctLeft = 1 - xPctComplete;
@@ -88,7 +90,7 @@ const main = async () => {
     // }
   }
 
-  drawLine(50, 100, 800, 700, BLACK);
+  // drawLine(50, 100, 800, 700, BLACK);
 
   // draw outline of a triangle
   const drawTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
@@ -97,8 +99,9 @@ const main = async () => {
     drawLine(p2.x, p2.y, p0.x, p0.y, color);
   }
 
+  // draw filled triangle "old-school" way
   // triangle in two halves by only filling in lines horizontally
-  const drawFilledTriangle = (t0: Point, t1: Point, t2: Point, color: Color) => {
+  const drawFilledTriangle0 = (t0: Point, t1: Point, t2: Point, color: Color) => {
     drawTriangle(t0, t1, t2, color);
 
     // iterate from bottom to 
@@ -119,12 +122,12 @@ const main = async () => {
       let x2 = t0.x + ((t2.x - t0.x) * pctYCompleteTo2);
 
       [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++){
+      for (let x = x1; x <= x2; x++) {
         drawPixel(x, y, color);
       }
     }
 
-     // top half of the triangle
+    // top half of the triangle
     for (let y = t1.y; y <= t2.y; y++) {
       const topHalfHeight = (t2.y - t1.y);
       const pctYCompleteFromT1 = (y - t1.y) / topHalfHeight;
@@ -135,15 +138,64 @@ const main = async () => {
       let x2 = t1.x + ((t2.x - t1.x) * pctYCompleteFromT1);
 
       [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++){
+      for (let x = x1; x <= x2; x++) {
         drawPixel(x, y, color);
       }
     }
   }
 
-  drawFilledTriangle({ x: 20, y: 20 }, { x: 50, y: 800 }, { x: 700, y: 500}, GREEN);
-  drawFilledTriangle({ x: 930, y: 20 }, { x: 500, y: 200 }, { x: 700, y: 500}, BLUE);
-  drawFilledTriangle({ x: 930, y: 20 }, { x: 850, y: 950}, { x: 700, y: 500}, RED);
+  // drawFilledTriangle0({ x: 20, y: 20 }, { x: 50, y: 800 }, { x: 700, y: 500}, GREEN);
+  // drawFilledTriangle0({ x: 930, y: 20 }, { x: 500, y: 200 }, { x: 700, y: 500}, BLUE);
+  // drawFilledTriangle0({ x: 930, y: 20 }, { x: 850, y: 950 }, { x: 700, y: 500 }, RED);
+
+
+  // uses barycentric coordinate system
+  // can be parallelized for every pixel in the bounding box, so more efficient
+  const drawFilledTriangle = (t0: Point, t1: Point, t2: Point, color: Color) => {
+    // create a bounding box around the triangle
+    const minX = Math.min(t0.x, Math.min(t1.x, t2.x));
+    const maxX = Math.max(t0.x, Math.max(t1.x, t2.x));
+    const minY = Math.min(t0.y, Math.min(t1.y, t2.y));
+    const maxY = Math.max(t0.y, Math.max(t1.y, t2.y));
+
+    // iterate through every point in the bounding box.
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        // test if the point lies within the triangle using barycentric coordinate system
+        const denominator = ((t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y));
+        const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
+        const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
+        const c = 1 - a - b;
+        const inTriangle = 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
+        if (inTriangle) drawPixel(x, y, color);
+      }
+    }
+  }
+
+  // parse .obj file into face and vertices
+  const model = await (await fetch('./model.obj')).text()
+  const [parsedModel] = new ObjFileParser(model).parse().models;
+
+  parsedModel.faces.forEach((face) => {
+    const vertices = face.vertices
+      // .obj files start index at 1
+      .map((vertex) => vertex.vertexIndex - 1)
+      // convert vertexIndex to vertex coords
+      .map((vertexIndex) => parsedModel.vertices[vertexIndex])
+      .map(({ x, y }) => ({
+        x: ((x + 1) / 2) * WIDTH,
+        y: ((y + 1) / 2) * HEIGHT,
+      }));
+
+    console.log({ vertices });
+    
+    drawFilledTriangle(
+      { x: vertices[0].x + 2, y: vertices[0].y },
+      { x: vertices[1].x, y: vertices[1].y },
+      { x: vertices[2].x, y: vertices[2].y },
+      [Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), 255],
+    )
+  });
 
   // convert plain array into array of unsigned 32-bit integers
   const imageData = ctx.createImageData(WIDTH, HEIGHT);

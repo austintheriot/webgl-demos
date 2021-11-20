@@ -21,7 +21,6 @@ const main = async () => {
     z?: number,
   }
 
-  const WHITE: Color = [255, 255, 255, 255];
   const RED: Color = [200, 0, 0, 255];
   const GREEN: Color = [0, 200, 0, 255];
   const BLUE: Color = [0, 0, 200, 255];
@@ -32,9 +31,7 @@ const main = async () => {
     color.forEach((byte, i) => pixels[index + i] = byte);
   }
 
-  type ForEachPointCallBack = (x: number, y: number, color: Color) => void;
-
-  const iterateThroughPoints = (x0: number, y0: number, x1: number, y1: number, color: Color, cb: ForEachPointCallBack) => {
+  const drawLine = (x0: number, y0: number, x1: number, y1: number, color: Color) => {
     let steep = false;
     // if line is sleep, calculate by iterating through y instead of x
     if (Math.abs(y1 - y0) > Math.abs(x1 - x0)) {
@@ -69,74 +66,35 @@ const main = async () => {
     // }
 
 
-     // ---------------- USING PERCENT COMPLETE:
-    // for (let x = Math.trunc(x0); x <= x1; x += 1) {
-    //   const xPctComplete = (x - x0) / (x1 - x0);
-    //   const y = (xPctComplete * (y1 - y0)) + y0;
+    //  ---------------- USING PERCENT COMPLETE:
+    for (let x = Math.trunc(x0); x <= x1; x += 1) {
+      const xPctComplete = (x - x0) / (x1 - x0);
+      const y = (xPctComplete * (y1 - y0)) + y0;
+
+      // if line is steep, switch x and y back to their normal positions when drawing:
+      if (steep) drawPixel(y, x, color);
+      else drawPixel(x, y, color);
+    }
+
+     // ---------------- USING PERCENT LEFT TO COMPLETE:
+    //  for (let x = Math.trunc(x0); x <= x1; x += 1) {
+    //    const xPctComplete = (x - x0) / (x1 - x0);
+    //    const yPctLeft = 1 - xPctComplete;
+    //    const y = y1 - (yPctLeft * (y1 - y0));
 
     //   // if line is steep, switch x and y back to their normal positions when drawing:
     //   if (steep) cb(y, x, color);
     //   else cb(x, y, color);
     // }
-
-     // ---------------- USING PERCENT LEFT TO COMPLETE:
-     for (let x = Math.trunc(x0); x <= x1; x += 1) {
-       const xPctComplete = (x - x0) / (x1 - x0);
-       const yPctLeft = 1 - xPctComplete;
-       const y = y1 - (yPctLeft * (y1 - y0));
-
-      // if line is steep, switch x and y back to their normal positions when drawing:
-      if (steep) cb(y, x, color);
-      else cb(x, y, color);
-    }
-  }
-
-  const drawLine = (x0: number, y0: number, x1: number, y1: number, color: Color) => {
-    iterateThroughPoints(x0, y0, x1, y1, color, drawPixel);
   }
 
   drawLine(50, 100, 800, 700, BLACK);
 
+  // draw outline of a triangle
   const drawTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
     drawLine(p0.x, p0.y, p1.x, p1.y, color);
     drawLine(p1.x, p1.y, p2.x, p2.y, color);
     drawLine(p2.x, p2.y, p0.x, p0.y, color);
-  }
-
-  drawTriangle({ x: 100, y: 200 }, { x: 200, y: 300 }, { x: 50, y: 750 }, BLACK);
-  drawTriangle({ x: 900, y: 780 }, { x: 700, y: 500 }, { x: 400, y: 800 }, RED);
-  drawTriangle({ x: 100, y: 200 }, { x: 200, y: 300 }, { x: 50, y: 750 }, BLACK);
-
-  // my initial implementation: produces artifacts from drawing diagonal lines
-  const _drawFilledTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
-    const vertexes = [p0, p1, p2];
-    // sort by y-coordinates: greatest -> least
-    vertexes.sort((a, b) => b.y - a.y);
-    const [left, right, bottom] = vertexes[0].x < vertexes[1].x ? [vertexes[0], vertexes[1], vertexes[2]] : [vertexes[1], vertexes[0], vertexes[2]];
-    const leftPoints: Point[] = [];
-    const rightPoints: Point[] = [];
-    iterateThroughPoints(left.x, left.y, bottom.x, bottom.y, color, (x, y) => leftPoints.push({ x, y }));
-    iterateThroughPoints(right.x, right.y, bottom.x, bottom.y, color, (x, y) => rightPoints.push({ x, y }));
-
-    // the line may iterate in any direction, so we should 
-    // make sure the lines are in the correct up-down direction before we iterate
-    leftPoints.sort((a, b) => a.y - b.y);
-    rightPoints.sort((a, b) => a.y - b.y);
-
-    let leftI = 0;
-    let rightI = 0;
-    while (leftI < leftPoints.length && rightI < rightPoints.length) {
-      const leftPoint = leftPoints[leftI];
-      const rightPoint = rightPoints[rightI];
-      drawLine(leftPoint.x, leftPoint.y, rightPoint.x, rightPoint.y, color);
-      
-      // increment the index that still has further to go
-      if ((leftI / leftPoints.length) < (rightI / rightPoints.length)) {
-        leftI++
-      } else {
-        rightI++
-      }
-    }
   }
 
   // triangle in two halves by only filling in lines horizontally

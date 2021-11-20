@@ -3,6 +3,7 @@ import ObjFileParser from 'obj-file-parser';
 const main = async () => {
   const WIDTH = 1000;
   const HEIGHT = 1000;
+  const DEPTH = 1000;
   const BPP = 4;
   const ARRAY_LENGTH = WIDTH * HEIGHT * BPP;
 
@@ -176,25 +177,64 @@ const main = async () => {
   const model = await (await fetch('./model.obj')).text()
   const [parsedModel] = new ObjFileParser(model).parse().models;
 
+  // point of light source
+  const LIGHT_X = 0;
+  const LIGHT_Y = Math.floor(HEIGHT / 2);
+  const LIGHT_Z = DEPTH;
+  // get light vector
+  const lightVectorLength = Math.sqrt(LIGHT_X ** 2 + LIGHT_Y ** 2 + LIGHT_Z ** 2);
+  // normalize the light vector between 0 and 1
+  const lx = LIGHT_X / lightVectorLength;
+  const ly = LIGHT_Y / lightVectorLength;
+  const lz = LIGHT_Z / lightVectorLength;
+
+  // render model
   parsedModel.faces.forEach((face) => {
-    const vertices = face.vertices
+    const [v0, v1, v2] = face.vertices
       // .obj files start index at 1
       .map((vertex) => vertex.vertexIndex - 1)
       // convert vertexIndex to vertex coords
       .map((vertexIndex) => parsedModel.vertices[vertexIndex])
-      .map(({ x, y }) => ({
+      .map(({ x, y, z }) => ({
         x: ((x + 1) / 2) * WIDTH,
         y: ((y + 1) / 2) * HEIGHT,
+        z: ((z + 1) / 2) * DEPTH,
       }));
 
-    console.log({ vertices });
+    // convert 3 triangle points to 2 vectors (2 sides of the triangle)
+    const U = {
+      x: v1.x - v0.x,
+      y: v1.y - v0.y,
+      z: v1.z - v0.z,
+    };
+    const V = {
+      x: v2.x - v0.x,
+      y: v2.y - v0.y,
+      z: v2.z - v0.z,
+    }
+
+    // get the surface normal from the triangle's two sides
+    let nx = U.y * V.z - U.z * V.y;
+    let ny = U.z * V.x - U.x * V.z;
+    let nz = U.x * V.y - U.y * V.x;
+    const normalVectorLength = Math.sqrt(nx ** 2 + ny ** 2 + nz ** 2);
+    // normalize the normal vector between 0 and 1
+    nx /= normalVectorLength;
+    ny /= normalVectorLength;
+    nz /= normalVectorLength;
     
-    drawFilledTriangle(
-      { x: vertices[0].x + 2, y: vertices[0].y },
-      { x: vertices[1].x, y: vertices[1].y },
-      { x: vertices[2].x, y: vertices[2].y },
-      [Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), Math.floor(Math.random() * 256), 255],
-    )
+    // dot product mixes the light strength with the normal to produce a scalar value
+    // light that is more perpendicular to the surface appears brighter
+    const lightStrength = (lx * nx + ly * ny + lz * nz);
+
+    if (lightStrength > 0) {
+      drawFilledTriangle(
+        { x: v0.x + 2, y: v0.y },
+        { x: v1.x, y: v1.y },
+        { x: v2.x, y: v2.y },
+        [Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), 255],
+      )
+    }
   });
 
   // convert plain array into array of unsigned 32-bit integers

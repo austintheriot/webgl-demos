@@ -19,6 +19,9 @@ const main = async () => {
   const HEIGHT = 1_000;
   const DEPTH = 1_000;
   const BPP = 4;
+  
+  // 0 == very close, 8 === some distortion, 100 === flat
+  const VIEW_DISTANCE = 6;
   const ARRAY_LENGTH = WIDTH * HEIGHT * BPP;
   const LIGHTING_MODE: 'default' | 'smooth' = 'smooth';
 
@@ -116,10 +119,10 @@ const main = async () => {
 
 
   // parse .obj file into face and vertices
-  const model = await (await fetch('./model.obj')).text()
+  const model = await (await fetch('./man.obj')).text()
   const [parsedModel] = new ObjFileParser(model).parse().models;
   const tga = new TgaLoader();
-  tga.open('./texture.tga', () => {
+  tga.open('./man_texture.tga', () => {
     console.log({ tga });
 
     // add in alpha to tga file & and rearrange rgb to be in correct order
@@ -128,12 +131,6 @@ const main = async () => {
       const [r, g, b] = tga.imageData.slice(x, x + 3);
       tgaImageData.push(b, g, r, 255);
     }
-    const canvas2 = document.querySelector('canvas:nth-of-type(2)') as HTMLCanvasElement;
-    canvas2.width = tga.header.width;
-    canvas2.height = tga.header.height;
-    const textureImageData = ctx.createImageData(tga.header.width, tga.header.height);
-    textureImageData.data.set(tgaImageData);
-    canvas2.getContext('2d')?.putImageData(textureImageData, 0, 0);
 
     // point of light source
     const LIGHT_X = WIDTH / 2;
@@ -156,11 +153,18 @@ const main = async () => {
         .map((vertex) => vertex.vertexIndex - 1)
         // convert vertexIndex to vertex coords
         .map((vertexIndex) => parsedModel.vertices[vertexIndex])
+        // add perspective distortion
+        .map(({ x, y, z }) => ({
+          x: x / (1 - z / VIEW_DISTANCE),
+          y: y / (1 - z / VIEW_DISTANCE),
+          z: z / (1 - z / VIEW_DISTANCE),
+        }))
+        // map from (-1, 1) to (0, canvas size)
         .map(({ x, y, z }) => ({
           x: ((x + 1) / 2) * WIDTH,
           y: ((y + 1) / 2) * HEIGHT,
           z: ((z + 1) / 2) * DEPTH,
-        }));
+        }))
 
       const [texture0, texture1, texture2] = face.vertices
         // .obj files start index at 1
@@ -178,6 +182,7 @@ const main = async () => {
           y: ((y + 1) / 2) * HEIGHT,
           z: ((z + 1) / 2) * DEPTH,
         }));
+      
 
       // GET NORMAL FOR FACE ITSELF: 
       // can be used for default (i.e. non-smooth) lighting

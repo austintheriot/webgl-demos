@@ -1,12 +1,26 @@
 import ObjFileParser from 'obj-file-parser';
 import TgaLoader from 'tga-js';
 
+
+type Color = [r: number, g: number, b: number, a: number];
+interface Point {
+  x: number,
+  y: number,
+  z: number,
+}
+interface TextureCoord {
+  u: number,
+  v: number,
+  w?: number
+}
+
 const main = async () => {
   const WIDTH = 1_000;
   const HEIGHT = 1_000;
   const DEPTH = 1_000;
   const BPP = 4;
   const ARRAY_LENGTH = WIDTH * HEIGHT * BPP;
+  const LIGHTING_MODE: 'default' | 'smooth' = 'smooth';
 
   const canvas = document.querySelector('canvas');
   if (!canvas) return;
@@ -15,290 +29,85 @@ const main = async () => {
 
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
-
   const pixels = new Uint8ClampedArray(ARRAY_LENGTH);
-
-  type Color = [r: number, g: number, b: number, a: number];
-  interface Point {
-    x: number,
-    y: number,
-    z: number,
-  }
-  interface TextureCoord {
-    u: number,
-    v: number,
-    w?: number
-  }
-
-  const RED: Color = [200, 0, 0, 255];
-  const GREEN: Color = [0, 200, 0, 255];
-  const BLUE: Color = [0, 0, 200, 255];
-  const BLACK: Color = [0, 0, 0, 255];
 
   const drawPixel = (x: number, y: number, color: Color) => {
     const index = (Math.floor(y) * WIDTH * BPP) + (Math.floor(x) * BPP);
     color.forEach((byte, i) => pixels[index + i] = byte);
   }
 
-  const drawLine = (x0: number, y0: number, x1: number, y1: number, color: Color) => {
-    let steep = false;
-    // if line is sleep, calculate by iterating through y instead of x
-    if (Math.abs(y1 - y0) > Math.abs(x1 - x0)) {
-      steep = true;
-      const temp1 = y0;
-      y0 = x0;
-      x0 = temp1;
-
-      const temp2 = y1;
-      y1 = x1;
-      x1 = temp2;
-    }
-    // draws from left to right always
-    if (x0 > x1) {
-      const temp = x1;
-      x1 = x0;
-      x0 = temp;
-
-      const temp2 = y1;
-      y1 = y0;
-      y0 = temp2;
-    }
-
-    // ---------------- USING SLOPE:
-    // const slope = (y1 - y0) / (x1 - x0);
-    // for (let x = Math.trunc(x0); x <= x1; x += 1) {
-    //   const y = Math.trunc(slope * (x - x0) + y0);
-
-    //   // if line is steep, switch x and y back to their normal positions when drawing:
-    //   if (steep) cb(y, x, color);
-    //   else cb(x, y, color);
-    // }
-
-
-    //  ---------------- USING PERCENT COMPLETE:
-    for (let x = Math.trunc(x0); x <= x1; x += 1) {
-      const xPctComplete = (x - x0) / (x1 - x0);
-      const y = (xPctComplete * (y1 - y0)) + y0;
-
-      // if line is steep, switch x and y back to their normal positions when drawing:
-      if (steep) drawPixel(y, x, color);
-      else drawPixel(x, y, color);
-    }
-
-    // ---------------- USING PERCENT LEFT TO COMPLETE:
-    //  for (let x = Math.trunc(x0); x <= x1; x += 1) {
-    //    const xPctComplete = (x - x0) / (x1 - x0);
-    //    const yPctLeft = 1 - xPctComplete;
-    //    const y = y1 - (yPctLeft * (y1 - y0));
-
-    //   // if line is steep, switch x and y back to their normal positions when drawing:
-    //   if (steep) cb(y, x, color);
-    //   else cb(x, y, color);
-    // }
-  }
-
-  // drawLine(50, 100, 800, 700, BLACK);
-
-  // draw outline of a triangle
-  const drawTriangle = (p0: Point, p1: Point, p2: Point, color: Color) => {
-    drawLine(p0.x, p0.y, p1.x, p1.y, color);
-    drawLine(p1.x, p1.y, p2.x, p2.y, color);
-    drawLine(p2.x, p2.y, p0.x, p0.y, color);
-  }
-
-  // draw filled triangle "old-school" way
-  // triangle in two halves by only filling in lines horizontally
-  const drawFilledTriangle0 = (t0: Point, t1: Point, t2: Point, color: Color) => {
-    drawTriangle(t0, t1, t2, color);
-
-    // iterate from bottom to 
-    const vertexes = [t0, t1, t2];
-    // sort by y-coordinates: least -> greatest
-    vertexes.sort((a, b) => a.y - b.y);
-    [t0, t1, t2] = vertexes;
-
-    // bottom half of the triangle
-    const totalHeight = t2.y - t0.y;
-    for (let y = t0.y; y <= t1.y; y++) {
-      const bottomHalfHeight = t1.y - t0.y;
-      const pctYCompleteTo1 = (y - t0.y) / bottomHalfHeight;
-      const pctYCompleteTo2 = (y - t0.y) / totalHeight;
-
-      // when you are n% away from y, you are also guaranteed to be n% away from x
-      let x1 = t0.x + ((t1.x - t0.x) * pctYCompleteTo1);
-      let x2 = t0.x + ((t2.x - t0.x) * pctYCompleteTo2);
-
-      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++) {
-        drawPixel(x, y, color);
-      }
-    }
-
-    // top half of the triangle
-    for (let y = t1.y; y <= t2.y; y++) {
-      const topHalfHeight = (t2.y - t1.y);
-      const pctYCompleteFromT1 = (y - t1.y) / topHalfHeight;
-      const pctYCompleteFromT0 = (y - t0.y) / totalHeight;
-
-      // when you are n% away from y, you are also guaranteed to be n% away from x
-      let x1 = t0.x + ((t2.x - t0.x) * pctYCompleteFromT0);
-      let x2 = t1.x + ((t2.x - t1.x) * pctYCompleteFromT1);
-
-      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++) {
-        drawPixel(x, y, color);
-      }
-    }
-  }
-
-  // drawFilledTriangle0({ x: 20, y: 20 }, { x: 50, y: 800 }, { x: 700, y: 500}, GREEN);
-  // drawFilledTriangle0({ x: 930, y: 20 }, { x: 500, y: 200 }, { x: 700, y: 500}, BLUE);
-  // drawFilledTriangle0({ x: 930, y: 20 }, { x: 850, y: 950 }, { x: 700, y: 500 }, RED);
-
-
-  // uses barycentric coordinate system
-  // can be parallelized for every pixel in the bounding box, so more efficient
-  const drawFilledTriangle = ([t0, t1, t2]: [Point, Point, Point], color: Color, zBuffer: number[]) => {
-    // create a bounding box around the triangle
-    const minX = Math.round(Math.min(t0.x, Math.min(t1.x, t2.x)));
-    const maxX = Math.round(Math.max(t0.x, Math.max(t1.x, t2.x)));
-    const minY = Math.round(Math.min(t0.y, Math.min(t1.y, t2.y)));
-    const maxY = Math.round(Math.max(t0.y, Math.max(t1.y, t2.y)));
-
-    // iterate through every point in the bounding box.
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
-        // test if the point lies within the triangle using barycentric coordinate system
-        const denominator = (t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y);
-        // barycentric coordinates (a, b, c)
-        const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
-        const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
-        const c = 1 - a - b;
-
-        const inTriangle = 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
-        if (inTriangle) {
-          // convert barycentric weights into the z coordinate for the current point
-          const z = t0.z * a + t1.z * b + t2.z * c;
-          const i = x + y * WIDTH;
-
-          // only draw if zIndex is higher than what has already been drawn
-          if (z > zBuffer[i]) {
-            zBuffer[i] = z;
-            drawPixel(x, y, color);
-          }
-        }
-      }
-    }
-  }
-
-  // const cross = (a: [number, number, number], b: [number, number, number]): [number, number, number] => ([
-  //   a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0],
-  // ])
-
-  // const barycentric = (pts: [Point, Point, Point], p: Point) => {
-  //   const a: [number, number, number] = [pts[2].x - pts[0].x, pts[1].x - pts[0].x, pts[0].x - p.x];
-  //   const b: [number, number, number] = [pts[2].y - pts[0].y, pts[1].y - pts[0].y, pts[0].y - p.y];
-  //   const u = cross(a, b);
-  //   if (Math.abs(u[2]) < 1) return [-1, 1, 1];
-  //   return [1 - (u[0] + u[1]) / u[2], u[1] / u[2], u[0] / u[2]];
-  // }
-
-  // Tutorial's method:
-  // const drawFilledTriangle = (pts: [Point, Point, Point], color: Color) => {
-  //   const bboxmin = [WIDTH - 1, HEIGHT - 1];
-  //   const bboxmax = [0, 0];
-  //   const clamp = [WIDTH - 1, HEIGHT - 1];
-  //   for (let i: 0 | 1 | 2 = 0; i < 3; i++) {
-  //     for (let j: 0 | 1 | 2 = 0; j < 2; j++) {
-  //       const letter = j === 0
-  //         ? 'x'
-  //         : j === 1
-  //           ? 'y'
-  //           : 'z';
-  //       bboxmin[j] = Math.max(0, Math.min(bboxmin[j], pts[i][letter] || 0));
-  //       bboxmax[j] = Math.min(clamp[j], Math.max(bboxmax[j], pts[i][letter] || 0));
-  //     }
-  //   }
-
-  //   const P: Point = { x: 0, y: 0 };
-  //   for (P.x = bboxmin[0]; P.x <= bboxmax[0]; P.x++) {
-  //     for (P.y = bboxmin[1]; P.y <= bboxmax[1]; P.y++) {
-  //       const bc_screen = barycentric(pts, P);
-  //       if (bc_screen[0] < 0 || bc_screen[1] < 0 || bc_screen[2] < 0) continue;
-  //       drawPixel(P.x, P.y, color);
-  //     }
-  //   }
-  // }
-
-  const applyWeights = ([n0, n1, n2]: [number, number, number],
+  const applyBarycentricWeights = ([n0, n1, n2]: [number, number, number],
     [barycentricA, barycentricB, barycentricC]: [number, number, number]) => (
     n0 * barycentricA + n1 * barycentricB + n2 * barycentricC
   );
 
-  let logged = 0;
-
   const drawTexturedTriangle = (
-
-    [vertex0, vertex1, vertex2]: [Point, Point, Point],
+    [point0, point1, point2]: [Point, Point, Point],
     [texture0, texture1, texture2]: [TextureCoord, TextureCoord, TextureCoord],
     [normal0, normal1, normal2]: [Point, Point, Point],
-    tgaHeader: any, tgaImageData: number[], zBuffer: number[], normalizedLightVector: Point) => {
+    faceNormal: Point,
+    tgaHeader: any,
+    tgaImageData: number[],
+    zBuffer: number[],
+    lightPoint: Point
+  ) => {
 
     // create a bounding box around the triangle
-    const minX = Math.round(Math.min(vertex0.x, Math.min(vertex1.x, vertex2.x)));
-    const maxX = Math.round(Math.max(vertex0.x, Math.max(vertex1.x, vertex2.x)));
-    const minY = Math.round(Math.min(vertex0.y, Math.min(vertex1.y, vertex2.y)));
-    const maxY = Math.round(Math.max(vertex0.y, Math.max(vertex1.y, vertex2.y)));
+    const minX = Math.round(Math.min(point0.x, Math.min(point1.x, point2.x)));
+    const maxX = Math.round(Math.max(point0.x, Math.max(point1.x, point2.x)));
+    const minY = Math.round(Math.min(point0.y, Math.min(point1.y, point2.y)));
+    const maxY = Math.round(Math.max(point0.y, Math.max(point1.y, point2.y)));
 
     // iterate through every point in the bounding box.
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         // test if the point lies within the triangle using barycentric coordinate system
-        const denominator = (vertex1.y - vertex2.y) * (vertex0.x - vertex2.x) + (vertex2.x - vertex1.x) * (vertex0.y - vertex2.y);
-
-        // barycentric coordinate system weights (a, b, c)
-        const weightA = ((vertex1.y - vertex2.y) * (x - vertex2.x) + (vertex2.x - vertex1.x) * (y - vertex2.y)) / denominator;
-        const weightB = ((vertex2.y - vertex0.y) * (x - vertex2.x) + (vertex0.x - vertex2.x) * (y - vertex2.y)) / denominator;
+        const denominator = (point1.y - point2.y) * (point0.x - point2.x) + (point2.x - point1.x) * (point0.y - point2.y);
+        const weightA = ((point1.y - point2.y) * (x - point2.x) + (point2.x - point1.x) * (y - point2.y)) / denominator;
+        const weightB = ((point2.y - point0.y) * (x - point2.x) + (point0.x - point2.x) * (y - point2.y)) / denominator;
         const weightC = 1 - weightA - weightB;
         const barycentricWeights: [number, number, number] = [weightA, weightB, weightC];
+        const pixelIsInTriangle = 0 <= weightA && weightA <= 1 && 0 <= weightB && weightB <= 1 && 0 <= weightC && weightC <= 1;
 
-        const inTriangle = 0 <= weightA && weightA <= 1 && 0 <= weightB && weightB <= 1 && 0 <= weightC && weightC <= 1;
-        if (inTriangle) {
-          // convert barycentric weights into the z coordinate for the current point
-          const z = applyWeights([vertex0.z, vertex1.z, vertex2.z], barycentricWeights);
+        if (pixelIsInTriangle) {
+          // use barycentric weights to get z coordinate for the current pixel
+          const z = applyBarycentricWeights([point0.z, point1.z, point2.z], barycentricWeights);
           const i = x + y * WIDTH;
 
           // only draw if zIndex is higher than what has already been drawn
           if (z > zBuffer[i]) {
-            // get color from texture
-            const u = Math.floor(applyWeights([texture0.u, texture1.u, texture2.u], barycentricWeights));
-            const v = Math.floor(applyWeights([texture0.v, texture1.v, texture2.v], barycentricWeights));
-            const colorIndex = (v * tgaHeader.width + u) * 4;
+            // GET INTERPOLATED COLOR FROM TEXTURE:
+            // interpolate texture sample between vertices
+            let u = applyBarycentricWeights([texture0.u, texture1.u, texture2.u], barycentricWeights);
+            let v = applyBarycentricWeights([texture0.v, texture1.v, texture2.v], barycentricWeights);
+            // map (0, 1) to texture image coordinates
+            u = Math.floor(tgaHeader.width * u);
+            v = Math.floor(tgaHeader.height * v);
+            // convert coordinates to image buffer index
+            const colorIndex = (tgaHeader.width * (v * 4)) + (u * 4);
             const r = tgaImageData[colorIndex];
             const g = tgaImageData[colorIndex + 1];
             const b = tgaImageData[colorIndex + 2];
 
+            // GET INTERPOLATED LIGHTiNG FROM NORMAL:
             // interpolate normals at vertices to get this pixel's normal
-            let nx = applyWeights([normal0.x, normal1.x, normal2.x], barycentricWeights);
-            let ny = applyWeights([normal0.y, normal1.y, normal2.y], barycentricWeights);
-            let nz = applyWeights([normal0.z, normal1.z, normal2.z], barycentricWeights);
+            let nx = applyBarycentricWeights([normal0.x, normal1.x, normal2.x], barycentricWeights);
+            let ny = applyBarycentricWeights([normal0.y, normal1.y, normal2.y], barycentricWeights);
+            let nz = applyBarycentricWeights([normal0.z, normal1.z, normal2.z], barycentricWeights);
             const normalVectorLength = Math.sqrt(nx ** 2 + ny ** 2 + nz ** 2);
             // normalize the normal vector between 0 and 1
             nx /= normalVectorLength;
             ny /= normalVectorLength;
             nz /= normalVectorLength;
-      
+
             // dot product mixes the light strength with the normal to produce a scalar value
             // light that is more perpendicular to the surface appears brighter
-            const lightStrength = (normalizedLightVector.x * nx + normalizedLightVector.y * ny + normalizedLightVector.z * nz);
-
-            if (logged < 100) {
-              logged++;
-              console.log({normal0, normal1, normal2, lightStrength, texture0, texture1, texture2, u, v, tgaImageData, colorIndex, r, g, b })
-            }
+            const lightStrength = LIGHTING_MODE === 'smooth'
+              ? (lightPoint.x * nx + lightPoint.y * ny + lightPoint.z * nz)
+              : (faceNormal.x * nx + faceNormal.y * ny + faceNormal.z * nz);
 
             zBuffer[i] = z;
-            drawPixel(x, y, [255 * lightStrength, 255 * lightStrength, 255 * lightStrength, 255]);
+            drawPixel(x, y, [r * lightStrength, g * lightStrength, b * lightStrength, 255]);
           }
         }
       }
@@ -341,7 +150,8 @@ const main = async () => {
     // render model
     const modelZBuffer = new Array(WIDTH * HEIGHT).fill(-Infinity);
     parsedModel.faces.forEach((face) => {
-      const [vertex0, vertex1, vertex2] = face.vertices
+      // GET POINT, TEXTURE, AND NORMALS FOR EACH VERTEX
+      const [point0, point1, point2] = face.vertices
         // .obj files start index at 1
         .map((vertex) => vertex.vertexIndex - 1)
         // convert vertexIndex to vertex coords
@@ -357,10 +167,6 @@ const main = async () => {
         .map((vertex) => vertex.textureCoordsIndex - 1)
         // convert vertexIndex to vertex coords
         .map((textCoordsIndex) => parsedModel.textureCoords[textCoordsIndex])
-        .map(({ u, v }) => ({
-          u: ((u + 1) / 2) * tga.header.width,
-          v: ((v + 1) / 2) * tga.header.height,
-        }));
 
       const [normal0, normal1, normal2] = face.vertices
         // .obj files start index at 1
@@ -373,27 +179,56 @@ const main = async () => {
           z: ((z + 1) / 2) * DEPTH,
         }));
 
+      // GET NORMAL FOR FACE ITSELF: 
+      // can be used for default (i.e. non-smooth) lighting
+      // convert 3 triangle points to 2 vectors (2 sides of the triangle)
+      const U = {
+        x: point1.x - point0.x,
+        y: point1.y - point0.y,
+        z: point1.z - point0.z,
+      };
+      const V = {
+        x: point2.x - point0.x,
+        y: point2.y - point0.y,
+        z: point2.z - point0.z,
+      }
+      // get the surface normal from the triangle's two sides
+      let faceNx = U.y * V.z - U.z * V.y;
+      let faceNy = U.z * V.x - U.x * V.z;
+      let faceNz = U.x * V.y - U.y * V.x;
+      const normalVectorLength = Math.sqrt(faceNx ** 2 + faceNy ** 2 + faceNz ** 2);
+      // normalize the normal vector between 0 and 1
+      faceNx /= normalVectorLength;
+      faceNy /= normalVectorLength;
+      faceNz /= normalVectorLength;
+      const faceNormal = {
+        x: faceNx,
+        y: faceNy,
+        z: faceNz,
+      }
 
-        drawTexturedTriangle(
-          [{ x: vertex0.x, y: vertex0.y, z: vertex0.z },
-          { x: vertex1.x, y: vertex1.y, z: vertex1.z },
-          { x: vertex2.x, y: vertex2.y, z: vertex2.z }],
+      drawTexturedTriangle(
+        [{ x: point0.x, y: point0.y, z: point0.z },
+        { x: point1.x, y: point1.y, z: point1.z },
+        { x: point2.x, y: point2.y, z: point2.z }],
 
-          [{ u: texture0.u, v: texture0.v },
-          { u: texture1.u, v: texture1.v },
-          { u: texture2.u, v: texture2.v }],
+        [{ u: texture0.u, v: texture0.v },
+        { u: texture1.u, v: texture1.v },
+        { u: texture2.u, v: texture2.v }],
 
-          [{ x: normal0.x, y: normal0.y, z: normal0.z },
-          { x: normal1.x, y: normal1.y, z: normal1.z },
-          { x: normal2.x, y: normal2.y, z: normal2.z }],
+        [{ x: normal0.x, y: normal0.y, z: normal0.z },
+        { x: normal1.x, y: normal1.y, z: normal1.z },
+        { x: normal2.x, y: normal2.y, z: normal2.z }],
 
-          tga.header,
-          tgaImageData,
+        faceNormal,
 
-          modelZBuffer,
+        tga.header,
+        tgaImageData,
 
-          {x: lx, y: ly, z: lz},
-        )
+        modelZBuffer,
+
+        { x: lx, y: ly, z: lz },
+      )
     });
 
 

@@ -49,7 +49,7 @@ const main = async () => {
     tgaHeader: any,
     tgaImageData: number[],
     zBuffer: number[],
-    lightPoint: Point
+    lightVector: Point
   ) => {
 
     // create a bounding box around the triangle
@@ -103,7 +103,7 @@ const main = async () => {
             // dot product mixes the light strength with the normal to produce a scalar value
             // light that is more perpendicular to the surface appears brighter
             const lightStrength = LIGHTING_MODE === 'smooth'
-              ? (lightPoint.x * nx + lightPoint.y * ny + lightPoint.z * nz)
+              ? (lightVector.x * nx + lightVector.y * ny + lightVector.z * nz)
               : (faceNormal.x * nx + faceNormal.y * ny + faceNormal.z * nz);
 
             zBuffer[i] = z;
@@ -136,9 +136,9 @@ const main = async () => {
     canvas2.getContext('2d')?.putImageData(textureImageData, 0, 0);
 
     // point of light source
-    const LIGHT_X = 1;
-    const LIGHT_Y = 0;
-    const LIGHT_Z = 0;
+    const LIGHT_X = WIDTH / 2;
+    const LIGHT_Y = HEIGHT;
+    const LIGHT_Z = DEPTH;
 
     // get light vector
     const lightVectorLength = Math.sqrt(LIGHT_X ** 2 + LIGHT_Y ** 2 + LIGHT_Z ** 2);

@@ -1,9 +1,9 @@
 import ObjFileParser from 'obj-file-parser';
 
 const main = async () => {
-  const WIDTH = 1000;
-  const HEIGHT = 1000;
-  const DEPTH = 1000;
+  const WIDTH = 5_000;
+  const HEIGHT = 5_000;
+  const DEPTH = 5_000;
   const BPP = 4;
   const ARRAY_LENGTH = WIDTH * HEIGHT * BPP;
 
@@ -30,7 +30,7 @@ const main = async () => {
   const BLACK: Color = [0, 0, 0, 255];
 
   const drawPixel = (x: number, y: number, color: Color) => {
-    const index = (Math.trunc(y) * WIDTH * BPP) + (Math.trunc(x) * BPP);
+    const index = (Math.floor(y) * WIDTH * BPP) + (Math.floor(x) * BPP);
     color.forEach((byte, i) => pixels[index + i] = byte);
   }
 
@@ -154,16 +154,19 @@ const main = async () => {
   // can be parallelized for every pixel in the bounding box, so more efficient
   const drawFilledTriangle = (t0: Point, t1: Point, t2: Point, color: Color) => {
     // create a bounding box around the triangle
-    const minX = Math.min(t0.x, Math.min(t1.x, t2.x));
-    const maxX = Math.max(t0.x, Math.max(t1.x, t2.x));
-    const minY = Math.min(t0.y, Math.min(t1.y, t2.y));
-    const maxY = Math.max(t0.y, Math.max(t1.y, t2.y));
+    const minX = Math.round(Math.min(t0.x, Math.min(t1.x, t2.x)));
+    const maxX = Math.round(Math.max(t0.x, Math.max(t1.x, t2.x)));
+    const minY = Math.round(Math.min(t0.y, Math.min(t1.y, t2.y)));
+    const maxY = Math.round(Math.max(t0.y, Math.max(t1.y, t2.y)));
+
+    // reduce edge errors by drawing each edge explicitly
+    drawTriangle(t0, t1, t2, color);
 
     // iterate through every point in the bounding box.
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         // test if the point lies within the triangle using barycentric coordinate system
-        const denominator = ((t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y));
+        const denominator = (t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y);
         const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
         const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
         const c = 1 - a - b;
@@ -172,6 +175,46 @@ const main = async () => {
       }
     }
   }
+
+  // const cross = (a: [number, number, number], b: [number, number, number]): [number, number, number] => ([
+  //   a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0],
+  // ])
+
+  // const barycentric = (pts: [Point, Point, Point], p: Point) => {
+  //   const a: [number, number, number] = [pts[2].x - pts[0].x, pts[1].x - pts[0].x, pts[0].x - p.x];
+  //   const b: [number, number, number] = [pts[2].y - pts[0].y, pts[1].y - pts[0].y, pts[0].y - p.y];
+  //   const u = cross(a, b);
+  //   if (Math.abs(u[2]) < 1) return [-1, 1, 1];
+  //   return [1 - (u[0] + u[1]) / u[2], u[1] / u[2], u[0] / u[2]];
+  // }
+
+  // Tutorial's method:
+  // const drawFilledTriangle = (pts: [Point, Point, Point], color: Color) => {
+  //   const bboxmin = [WIDTH - 1, HEIGHT - 1];
+  //   const bboxmax = [0, 0];
+  //   const clamp = [WIDTH - 1, HEIGHT - 1];
+  //   for (let i: 0 | 1 | 2 = 0; i < 3; i++) {
+  //     for (let j: 0 | 1 | 2 = 0; j < 2; j++) {
+  //       const letter = j === 0
+  //         ? 'x'
+  //         : j === 1
+  //           ? 'y'
+  //           : 'z';
+  //       bboxmin[j] = Math.max(0, Math.min(bboxmin[j], pts[i][letter] || 0));
+  //       bboxmax[j] = Math.min(clamp[j], Math.max(bboxmax[j], pts[i][letter] || 0));
+  //     }
+  //   }
+
+  //   const P: Point = { x: 0, y: 0 };
+  //   for (P.x = bboxmin[0]; P.x <= bboxmax[0]; P.x++) {
+  //     for (P.y = bboxmin[1]; P.y <= bboxmax[1]; P.y++) {
+  //       const bc_screen = barycentric(pts, P);
+  //       if (bc_screen[0] < 0 || bc_screen[1] < 0 || bc_screen[2] < 0) continue;
+  //       drawPixel(P.x, P.y, color);
+  //     }
+  //   }
+  // }
+
 
   // parse .obj file into face and vertices
   const model = await (await fetch('./model.obj')).text()
@@ -222,16 +265,14 @@ const main = async () => {
     nx /= normalVectorLength;
     ny /= normalVectorLength;
     nz /= normalVectorLength;
-    
+
     // dot product mixes the light strength with the normal to produce a scalar value
     // light that is more perpendicular to the surface appears brighter
     const lightStrength = (lx * nx + ly * ny + lz * nz);
 
     if (lightStrength > 0) {
       drawFilledTriangle(
-        { x: v0.x + 2, y: v0.y },
-        { x: v1.x, y: v1.y },
-        { x: v2.x, y: v2.y },
+        { x: v0.x + 2, y: v0.y }, { x: v1.x, y: v1.y }, { x: v2.x, y: v2.y },
         [Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), 255],
       )
     }

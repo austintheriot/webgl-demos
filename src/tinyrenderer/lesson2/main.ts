@@ -1,9 +1,9 @@
 import ObjFileParser from 'obj-file-parser';
 
 const main = async () => {
-  const WIDTH = 5_000;
-  const HEIGHT = 5_000;
-  const DEPTH = 5_000;
+  const WIDTH = 1_000;
+  const HEIGHT = 1_000;
+  const DEPTH = 1_000;
   const BPP = 4;
   const ARRAY_LENGTH = WIDTH * HEIGHT * BPP;
 
@@ -21,7 +21,7 @@ const main = async () => {
   type Point = {
     x: number,
     y: number,
-    z?: number,
+    z: number,
   }
 
   const RED: Color = [200, 0, 0, 255];
@@ -152,26 +152,35 @@ const main = async () => {
 
   // uses barycentric coordinate system
   // can be parallelized for every pixel in the bounding box, so more efficient
-  const drawFilledTriangle = (t0: Point, t1: Point, t2: Point, color: Color) => {
+  const drawFilledTriangle = ([t0, t1, t2]: [Point, Point, Point], color: Color, zBuffer: number[]) => {
     // create a bounding box around the triangle
     const minX = Math.round(Math.min(t0.x, Math.min(t1.x, t2.x)));
     const maxX = Math.round(Math.max(t0.x, Math.max(t1.x, t2.x)));
     const minY = Math.round(Math.min(t0.y, Math.min(t1.y, t2.y)));
     const maxY = Math.round(Math.max(t0.y, Math.max(t1.y, t2.y)));
 
-    // reduce edge errors by drawing each edge explicitly
-    drawTriangle(t0, t1, t2, color);
-
     // iterate through every point in the bounding box.
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         // test if the point lies within the triangle using barycentric coordinate system
         const denominator = (t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y);
+        // barycentric point = <a, b, c>
         const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
         const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
         const c = 1 - a - b;
+        
         const inTriangle = 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
-        if (inTriangle) drawPixel(x, y, color);
+        if (inTriangle) {
+          // convert barycentric weights into the z coordinate for the current point
+          const z = t0.z * a + t1.z * b + t2.z * c;
+          const i = x + y * WIDTH;
+
+          // only draw if zIndex is higher than what has already been drawn
+          if (z > zBuffer[i]) {
+            zBuffer[i] = z;
+            drawPixel(x, y, color);
+          }
+        }
       }
     }
   }
@@ -232,6 +241,7 @@ const main = async () => {
   const lz = LIGHT_Z / lightVectorLength;
 
   // render model
+  const modelZBuffer = new Array(WIDTH * HEIGHT).fill(-Infinity);
   parsedModel.faces.forEach((face) => {
     const [v0, v1, v2] = face.vertices
       // .obj files start index at 1
@@ -272,8 +282,9 @@ const main = async () => {
 
     if (lightStrength > 0) {
       drawFilledTriangle(
-        { x: v0.x + 2, y: v0.y }, { x: v1.x, y: v1.y }, { x: v2.x, y: v2.y },
+       [{ x: v0.x, y: v0.y, z: v0.z }, { x: v1.x, y: v1.y, z: v1.z }, { x: v2.x, y: v2.y, z: v1.z }],
         [Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), 255],
+        modelZBuffer
       )
     }
   });

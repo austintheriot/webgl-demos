@@ -164,7 +164,7 @@ const main = async () => {
       for (let y = minY; y <= maxY; y++) {
         // test if the point lies within the triangle using barycentric coordinate system
         const denominator = (t1.y - t2.y) * (t0.x - t2.x) + (t2.x - t1.x) * (t0.y - t2.y);
-        // barycentric point = <a, b, c>
+        // barycentric coordinates (a, b, c)
         const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
         const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
         const c = 1 - a - b;

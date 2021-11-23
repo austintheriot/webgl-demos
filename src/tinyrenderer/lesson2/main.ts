@@ -1,4 +1,5 @@
 import ObjFileParser from 'obj-file-parser';
+import TgaLoader from 'tga-js';
 
 const main = async () => {
   const WIDTH = 1_000;
@@ -18,10 +19,15 @@ const main = async () => {
   const pixels = new Uint8ClampedArray(ARRAY_LENGTH);
 
   type Color = [r: number, g: number, b: number, a: number];
-  type Point = {
+  interface Point {
     x: number,
     y: number,
     z: number,
+  }
+  interface TextureCoord {
+    u: number,
+    v: number,
+    w?: number
   }
 
   const RED: Color = [200, 0, 0, 255];
@@ -168,7 +174,7 @@ const main = async () => {
         const a = ((t1.y - t2.y) * (x - t2.x) + (t2.x - t1.x) * (y - t2.y)) / denominator;
         const b = ((t2.y - t0.y) * (x - t2.x) + (t0.x - t2.x) * (y - t2.y)) / denominator;
         const c = 1 - a - b;
-        
+
         const inTriangle = 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
         if (inTriangle) {
           // convert barycentric weights into the z coordinate for the current point
@@ -224,75 +230,178 @@ const main = async () => {
   //   }
   // }
 
+  const applyWeights = ([n0, n1, n2]: [number, number, number],
+    [barycentricA, barycentricB, barycentricC]: [number, number, number]) => (
+    n0 * barycentricA + n1 * barycentricB + n2 * barycentricC
+  );
+
+  let logged = 0;
+
+  const drawTexturedTriangle = (
+
+    [vertex0, vertex1, vertex2]: [Point, Point, Point],
+    [texture0, texture1, texture2]: [TextureCoord, TextureCoord, TextureCoord],
+    [normal0, normal1, normal2]: [Point, Point, Point],
+    tgaHeader: any, tgaImageData: number[], zBuffer: number[], normalizedLightVector: Point) => {
+
+    // create a bounding box around the triangle
+    const minX = Math.round(Math.min(vertex0.x, Math.min(vertex1.x, vertex2.x)));
+    const maxX = Math.round(Math.max(vertex0.x, Math.max(vertex1.x, vertex2.x)));
+    const minY = Math.round(Math.min(vertex0.y, Math.min(vertex1.y, vertex2.y)));
+    const maxY = Math.round(Math.max(vertex0.y, Math.max(vertex1.y, vertex2.y)));
+
+    // iterate through every point in the bounding box.
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        // test if the point lies within the triangle using barycentric coordinate system
+        const denominator = (vertex1.y - vertex2.y) * (vertex0.x - vertex2.x) + (vertex2.x - vertex1.x) * (vertex0.y - vertex2.y);
+
+        // barycentric coordinate system weights (a, b, c)
+        const weightA = ((vertex1.y - vertex2.y) * (x - vertex2.x) + (vertex2.x - vertex1.x) * (y - vertex2.y)) / denominator;
+        const weightB = ((vertex2.y - vertex0.y) * (x - vertex2.x) + (vertex0.x - vertex2.x) * (y - vertex2.y)) / denominator;
+        const weightC = 1 - weightA - weightB;
+        const barycentricWeights: [number, number, number] = [weightA, weightB, weightC];
+
+        const inTriangle = 0 <= weightA && weightA <= 1 && 0 <= weightB && weightB <= 1 && 0 <= weightC && weightC <= 1;
+        if (inTriangle) {
+          // convert barycentric weights into the z coordinate for the current point
+          const z = applyWeights([vertex0.z, vertex1.z, vertex2.z], barycentricWeights);
+          const i = x + y * WIDTH;
+
+          // only draw if zIndex is higher than what has already been drawn
+          if (z > zBuffer[i]) {
+            // get color from texture
+            const u = Math.floor(applyWeights([texture0.u, texture1.u, texture2.u], barycentricWeights));
+            const v = Math.floor(applyWeights([texture0.v, texture1.v, texture2.v], barycentricWeights));
+            const colorIndex = (v * tgaHeader.width + u) * 4;
+            const r = tgaImageData[colorIndex];
+            const g = tgaImageData[colorIndex + 1];
+            const b = tgaImageData[colorIndex + 2];
+
+            // interpolate normals at vertices to get this pixel's normal
+            let nx = applyWeights([normal0.x, normal1.x, normal2.x], barycentricWeights);
+            let ny = applyWeights([normal0.y, normal1.y, normal2.y], barycentricWeights);
+            let nz = applyWeights([normal0.z, normal1.z, normal2.z], barycentricWeights);
+            const normalVectorLength = Math.sqrt(nx ** 2 + ny ** 2 + nz ** 2);
+            // normalize the normal vector between 0 and 1
+            nx /= normalVectorLength;
+            ny /= normalVectorLength;
+            nz /= normalVectorLength;
+      
+            // dot product mixes the light strength with the normal to produce a scalar value
+            // light that is more perpendicular to the surface appears brighter
+            const lightStrength = (normalizedLightVector.x * nx + normalizedLightVector.y * ny + normalizedLightVector.z * nz);
+
+            if (logged < 100) {
+              logged++;
+              console.log({normal0, normal1, normal2, lightStrength, texture0, texture1, texture2, u, v, tgaImageData, colorIndex, r, g, b })
+            }
+
+            zBuffer[i] = z;
+            drawPixel(x, y, [255 * lightStrength, 255 * lightStrength, 255 * lightStrength, 255]);
+          }
+        }
+      }
+    }
+  }
+
 
   // parse .obj file into face and vertices
   const model = await (await fetch('./model.obj')).text()
   const [parsedModel] = new ObjFileParser(model).parse().models;
+  const tga = new TgaLoader();
+  tga.open('./texture.tga', () => {
+    console.log({ tga });
 
-  // point of light source
-  const LIGHT_X = 0;
-  const LIGHT_Y = Math.floor(HEIGHT / 2);
-  const LIGHT_Z = DEPTH;
-  // get light vector
-  const lightVectorLength = Math.sqrt(LIGHT_X ** 2 + LIGHT_Y ** 2 + LIGHT_Z ** 2);
-  // normalize the light vector between 0 and 1
-  const lx = LIGHT_X / lightVectorLength;
-  const ly = LIGHT_Y / lightVectorLength;
-  const lz = LIGHT_Z / lightVectorLength;
-
-  // render model
-  const modelZBuffer = new Array(WIDTH * HEIGHT).fill(-Infinity);
-  parsedModel.faces.forEach((face) => {
-    const [v0, v1, v2] = face.vertices
-      // .obj files start index at 1
-      .map((vertex) => vertex.vertexIndex - 1)
-      // convert vertexIndex to vertex coords
-      .map((vertexIndex) => parsedModel.vertices[vertexIndex])
-      .map(({ x, y, z }) => ({
-        x: ((x + 1) / 2) * WIDTH,
-        y: ((y + 1) / 2) * HEIGHT,
-        z: ((z + 1) / 2) * DEPTH,
-      }));
-
-    // convert 3 triangle points to 2 vectors (2 sides of the triangle)
-    const U = {
-      x: v1.x - v0.x,
-      y: v1.y - v0.y,
-      z: v1.z - v0.z,
-    };
-    const V = {
-      x: v2.x - v0.x,
-      y: v2.y - v0.y,
-      z: v2.z - v0.z,
+    // add in alpha to tga file & and rearrange rgb to be in correct order
+    const tgaImageData = new Array();
+    for (let x = 0; x < tga.imageData.length; x += 3) {
+      const [r, g, b] = tga.imageData.slice(x, x + 3);
+      tgaImageData.push(b, g, r, 255);
     }
+    const canvas2 = document.querySelector('canvas:nth-of-type(2)') as HTMLCanvasElement;
+    canvas2.width = tga.header.width;
+    canvas2.height = tga.header.height;
+    const textureImageData = ctx.createImageData(tga.header.width, tga.header.height);
+    textureImageData.data.set(tgaImageData);
+    canvas2.getContext('2d')?.putImageData(textureImageData, 0, 0);
 
-    // get the surface normal from the triangle's two sides
-    let nx = U.y * V.z - U.z * V.y;
-    let ny = U.z * V.x - U.x * V.z;
-    let nz = U.x * V.y - U.y * V.x;
-    const normalVectorLength = Math.sqrt(nx ** 2 + ny ** 2 + nz ** 2);
-    // normalize the normal vector between 0 and 1
-    nx /= normalVectorLength;
-    ny /= normalVectorLength;
-    nz /= normalVectorLength;
+    // point of light source
+    const LIGHT_X = 1;
+    const LIGHT_Y = 0;
+    const LIGHT_Z = 0;
 
-    // dot product mixes the light strength with the normal to produce a scalar value
-    // light that is more perpendicular to the surface appears brighter
-    const lightStrength = (lx * nx + ly * ny + lz * nz);
+    // get light vector
+    const lightVectorLength = Math.sqrt(LIGHT_X ** 2 + LIGHT_Y ** 2 + LIGHT_Z ** 2);
+    // normalize the light vector between 0 and 1
+    const lx = LIGHT_X / lightVectorLength;
+    const ly = LIGHT_Y / lightVectorLength;
+    const lz = LIGHT_Z / lightVectorLength;
 
-    if (lightStrength > 0) {
-      drawFilledTriangle(
-       [{ x: v0.x, y: v0.y, z: v0.z }, { x: v1.x, y: v1.y, z: v1.z }, { x: v2.x, y: v2.y, z: v1.z }],
-        [Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), Math.floor(256 * lightStrength), 255],
-        modelZBuffer
-      )
-    }
-  });
+    // render model
+    const modelZBuffer = new Array(WIDTH * HEIGHT).fill(-Infinity);
+    parsedModel.faces.forEach((face) => {
+      const [vertex0, vertex1, vertex2] = face.vertices
+        // .obj files start index at 1
+        .map((vertex) => vertex.vertexIndex - 1)
+        // convert vertexIndex to vertex coords
+        .map((vertexIndex) => parsedModel.vertices[vertexIndex])
+        .map(({ x, y, z }) => ({
+          x: ((x + 1) / 2) * WIDTH,
+          y: ((y + 1) / 2) * HEIGHT,
+          z: ((z + 1) / 2) * DEPTH,
+        }));
 
-  // convert plain array into array of unsigned 32-bit integers
-  const imageData = ctx.createImageData(WIDTH, HEIGHT);
-  imageData.data.set(pixels);
-  ctx.putImageData(imageData, 0, 0);
+      const [texture0, texture1, texture2] = face.vertices
+        // .obj files start index at 1
+        .map((vertex) => vertex.textureCoordsIndex - 1)
+        // convert vertexIndex to vertex coords
+        .map((textCoordsIndex) => parsedModel.textureCoords[textCoordsIndex])
+        .map(({ u, v }) => ({
+          u: ((u + 1) / 2) * tga.header.width,
+          v: ((v + 1) / 2) * tga.header.height,
+        }));
+
+      const [normal0, normal1, normal2] = face.vertices
+        // .obj files start index at 1
+        .map((vertex) => vertex.vertexNormalIndex - 1)
+        // convert vertexIndex to vertex coords
+        .map((vertexNormalIndex) => parsedModel.vertexNormals[vertexNormalIndex])
+        .map(({ x, y, z }) => ({
+          x: ((x + 1) / 2) * WIDTH,
+          y: ((y + 1) / 2) * HEIGHT,
+          z: ((z + 1) / 2) * DEPTH,
+        }));
+
+
+        drawTexturedTriangle(
+          [{ x: vertex0.x, y: vertex0.y, z: vertex0.z },
+          { x: vertex1.x, y: vertex1.y, z: vertex1.z },
+          { x: vertex2.x, y: vertex2.y, z: vertex2.z }],
+
+          [{ u: texture0.u, v: texture0.v },
+          { u: texture1.u, v: texture1.v },
+          { u: texture2.u, v: texture2.v }],
+
+          [{ x: normal0.x, y: normal0.y, z: normal0.z },
+          { x: normal1.x, y: normal1.y, z: normal1.z },
+          { x: normal2.x, y: normal2.y, z: normal2.z }],
+
+          tga.header,
+          tgaImageData,
+
+          modelZBuffer,
+
+          {x: lx, y: ly, z: lz},
+        )
+    });
+
+
+    // convert plain array into array of unsigned 32-bit integers
+    const imageData = ctx.createImageData(WIDTH, HEIGHT);
+    imageData.data.set(pixels);
+    ctx.putImageData(imageData, 0, 0);
+  })
 }
 
 main();

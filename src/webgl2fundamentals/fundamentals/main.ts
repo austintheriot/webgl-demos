@@ -1,5 +1,6 @@
 const err = <D extends Record<string, unknown>>(msg: string, data: D) => {
-  console.log(new Error(msg), data);
+  console.error(msg, data);
+  return new Error(msg);
 }
 
 /** compiles a shader from source code and returns it if successful */
@@ -34,18 +35,33 @@ const createProgram = (gl: WebGLRenderingContext, vertexShader: WebGLShader, fra
   return null;
 }
 
+const resizeCanvasToDisplaySize = (canvas: HTMLCanvasElement) => {
+  // Lookup the size the browser is displaying the canvas in CSS pixels.
+  const canvasElWidth  = canvas.clientWidth;
+  const canvasElHeight = canvas.clientHeight;
+ 
+  // Check if the canvas is not the same size.
+  const needResize = canvas.width  !== canvasElWidth || canvas.height !== canvasElHeight;
+ 
+  if (needResize) {
+    // Make the canvas the same size
+    canvas.width  = canvasElWidth;
+    canvas.height = canvasElHeight;
+  }
+ 
+  return needResize;
+}
+
 const main = async () => {
   const canvas = document.querySelector('canvas');
   if (!canvas) throw err('canvas not found', { canvas });
-  const gl = canvas.getContext('webgl');
+  const gl = canvas.getContext('webgl2');
   if (!gl) throw err('WebGL not supported', { gl });
 
-  const WIDTH = 1600;
+  const WIDTH = 900;
   const HEIGHT = 900;
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
-  // map (-1, 1) clip space to (0, WIDTH) & (0, HEIGHT)
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
   const [vertexShaderSource, fragmentShaderSource] = await Promise.all([
     fetch('./vertex.glsl'),
@@ -75,25 +91,19 @@ const main = async () => {
   const positions = [
     0, 0,
     0, 0.5,
-    0.7, 0,
+    0.5, 0,
   ];
 
-  // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+  // Bind it to ARRAY_BUFFER (think of it as the global variable ARRAY_BUFFER = positionBuffer)
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
+  // copy javascript data into WebGL buffer
   // STATIC_DRAW hints to WebGL that this won't change much
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-  // code above is INITIALIZATION
-  /////////////////////////////////////////////////////////////////////////////////////
-  // code below is RENDERING
-
-  // set which color to use when clearing canvas
-  gl.clearColor(0, 0, 0, 0);
-  // actually clear the canvas
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  gl.useProgram(program);
+  const vertexArrayObject = gl.createVertexArray();
+  if (!vertexArrayObject) throw err('error creating vertex array object', { vao: vertexArrayObject });
+  gl.bindVertexArray(vertexArrayObject);
 
   // turn on the a_position attribute
   gl.enableVertexAttribArray(positionAttributeLocation);
@@ -106,6 +116,15 @@ const main = async () => {
   const positionBufferOffset = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, positionBufferOffset)
 
+  resizeCanvasToDisplaySize(canvas);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  // Clear the canvas
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.useProgram(program);
+  gl.bindVertexArray(vertexArrayObject)
 
   // draw
   const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times

@@ -81,7 +81,7 @@ const main = async () => {
   if (!program) throw err('error creating gl program', { program });
 
   // look up where the vertex data needs to go.
-  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');  
 
   // Create a buffer and put three 2d clip space points in it
   const positionBuffer = gl.createBuffer();
@@ -89,9 +89,15 @@ const main = async () => {
 
   // three 2d points
   const positions = [
-    0, 0,
-    0, 0.5,
-    0.5, 0,
+    // triangle 0
+    100, 100,
+    100, 10,
+    10, 100,
+
+    // triangle 1
+    100, 10,
+    10, 100,
+    10, 10,
   ];
 
   // Bind it to ARRAY_BUFFER (think of it as the global variable ARRAY_BUFFER = positionBuffer)
@@ -126,10 +132,14 @@ const main = async () => {
   gl.useProgram(program);
   gl.bindVertexArray(vertexArrayObject)
 
+  // must set this uniform after program is in use?
+  const resolutionAttributeLocation = gl.getUniformLocation(program, 'u_resolution');
+  gl.uniform2f(resolutionAttributeLocation, gl.canvas.width, gl.canvas.height);
+
   // draw
   const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
   const offset = 0;
-  const count = 3; // this will execute vertex shader 3 times
+  const count = 6; // this will execute vertex shader 3 times
   gl.drawArrays(primitiveType, offset, count);
 };
 

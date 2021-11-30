@@ -37,18 +37,18 @@ const createProgram = (gl: WebGLRenderingContext, vertexShader: WebGLShader, fra
 
 const resizeCanvasToDisplaySize = (canvas: HTMLCanvasElement) => {
   // Lookup the size the browser is displaying the canvas in CSS pixels.
-  const canvasElWidth  = canvas.clientWidth;
+  const canvasElWidth = canvas.clientWidth;
   const canvasElHeight = canvas.clientHeight;
- 
+
   // Check if the canvas is not the same size.
-  const needResize = canvas.width  !== canvasElWidth || canvas.height !== canvasElHeight;
- 
+  const needResize = canvas.width !== canvasElWidth || canvas.height !== canvasElHeight;
+
   if (needResize) {
     // Make the canvas the same size
-    canvas.width  = canvasElWidth;
+    canvas.width = canvasElWidth;
     canvas.height = canvasElHeight;
   }
- 
+
   return needResize;
 }
 
@@ -81,31 +81,16 @@ const main = async () => {
   if (!program) throw err('error creating gl program', { program });
 
   // look up where the vertex data needs to go.
-  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');  
+  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
 
   // Create a buffer and put three 2d clip space points in it
   const positionBuffer = gl.createBuffer();
   if (!positionBuffer) throw err('error creating position buffer', { positionBuffer });
 
-  // three 2d points
-  const positions = [
-    // triangle 0
-    100, 100,
-    100, 10,
-    10, 100,
-
-    // triangle 1
-    100, 10,
-    10, 100,
-    10, 10,
-  ];
-
-  // Bind it to ARRAY_BUFFER (think of it as the global variable ARRAY_BUFFER = positionBuffer)
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-  // copy javascript data into WebGL buffer
-  // STATIC_DRAW hints to WebGL that this won't change much
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+
 
   const vertexArrayObject = gl.createVertexArray();
   if (!vertexArrayObject) throw err('error creating vertex array object', { vao: vertexArrayObject });
@@ -133,14 +118,54 @@ const main = async () => {
   gl.bindVertexArray(vertexArrayObject)
 
   // must set this uniform after program is in use?
-  const resolutionAttributeLocation = gl.getUniformLocation(program, 'u_resolution');
-  gl.uniform2f(resolutionAttributeLocation, gl.canvas.width, gl.canvas.height);
+  const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
 
-  // draw
-  const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
-  const offset = 0;
-  const count = 6; // this will execute vertex shader 3 times
-  gl.drawArrays(primitiveType, offset, count);
+  const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+
+  for (let i = 0; i < 100; i++) {
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+    gl.uniform4f(colorUniformLocation, Math.random(), Math.random(), Math.random(), 1);
+
+    const Ax = Math.floor(Math.random() * (canvas.width / 2));
+    const Ay = Math.floor(Math.random() * (canvas.height / 2));
+
+    const width = Math.floor(Math.random() * (canvas.width / 2));
+    const height = Math.floor(Math.random() * (canvas.height / 2));
+
+    const Bx = Ax + width;
+    const By = Ay;
+
+    const Cx = Ax + width;
+    const Cy = Ay + height;
+
+    const Dx = Ax;
+    const Dy = Ay + height;
+
+    // three 2d points
+    const positions = [
+      // triangle 0
+      Cx, Cy,
+      Bx, By,
+      Dx, Dy,
+
+      // triangle 1
+      Bx, By,
+      Dx, Dy,
+      Ax, Ay,
+    ];
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    // copy javascript data into WebGL buffer
+    // STATIC_DRAW hints to WebGL that this won't change much
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    // draw
+    const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
+    const offset = 0;
+    const count = 6; // this will execute vertex shader 3 times
+    gl.drawArrays(primitiveType, offset, count);
+  }
 };
 
 main();

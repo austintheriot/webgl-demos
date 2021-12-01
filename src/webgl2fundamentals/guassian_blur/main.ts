@@ -44,6 +44,9 @@ const renderImage = async (image: HTMLImageElement) => {
   const texCoordAttributeLocation = gl.getAttribLocation(program, "a_texCoord");
   const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
   const imageUniformLocation = gl.getUniformLocation(program, "u_image");
+  const kernelUniformLocation = gl.getUniformLocation(program, "u_kernel");
+  const kernelSizeUniformLocation = gl.getUniformLocation(program, "u_kernelSize");
+  const kernelWeightUniformLocation = gl.getUniformLocation(program, "u_kernelWeight");
 
   // POSITION BUFFER ////////////////////////////////////////////////////////////////////////////////////////////
   const positionBuffer = gl.createBuffer()!;
@@ -78,6 +81,7 @@ const renderImage = async (image: HTMLImageElement) => {
     0.0, 0.0,
     1.0, 0.0,
     0.0, 1.0,
+
     0.0, 1.0,
     1.0, 0.0,
     1.0, 1.0]), gl.STATIC_DRAW);
@@ -116,11 +120,29 @@ const renderImage = async (image: HTMLImageElement) => {
 
 
   // UNIFORMS ////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
   // Tell the fragment shader to get the u_image texture from texture unit 0
   gl.uniform1i(imageUniformLocation, 0);
+
+  // create 15 x 15 gaussian blur kernel
+  const kernel = new Array(15 ** 2);
+  const kernelWidth = Math.sqrt(kernel.length);
+  const sigma = 30;
+  for (let x = 0; x < kernelWidth; x++) {
+    for (let y = 0; y < kernelWidth; y++) {
+      kernel[y * kernelWidth + x] = Math.exp(
+        -((x ** 2 + y ** 2) / (2 * sigma ** 2))
+      ) / (2 * Math.PI * sigma ** 2);
+    }
+  }
+  const sum = kernel.reduce((a, b) => a + b);
+  kernel.map((el) => el / sum); // Normalize the kernel
+  const kernelWeight = kernel.reduce((a, b) => a + b);
+  gl.uniform1fv(kernelUniformLocation, kernel);
+  gl.uniform1i(kernelSizeUniformLocation, kernelWidth);
+  gl.uniform1f(kernelWeightUniformLocation, kernelWeight);
 
 
   // RENDERING ////////////////////////////////////////////////////////////////////////////////////////////

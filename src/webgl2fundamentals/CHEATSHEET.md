@@ -23,3 +23,9 @@
 
 - Texel 
   - pixel within a texture image
+
+- Components of a vector:
+  - These are all equivalent when indexing from a vector:
+    - .xyzw (position / direction)
+    - .rgba (colors)
+    - .stpq (texture coordinates)

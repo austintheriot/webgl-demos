@@ -62,8 +62,8 @@ const main = async () => {
   if (!colorBuffer) throw err('error creating position buffer', { colorBuffer });
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.enableVertexAttribArray(colorAttributeLocation);
-  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letter_f_3d_colors), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0)
+  gl.bufferData(gl.ARRAY_BUFFER, new Uint8ClampedArray(letter_f_3d_colors), gl.STATIC_DRAW);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);

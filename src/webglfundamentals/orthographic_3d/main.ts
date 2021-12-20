@@ -182,6 +182,7 @@ const setTransformationMatrix = () => {
 const render = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement) => {
   resizeCanvasToDisplaySize(canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.enable(gl.CULL_FACE);
 
   // Clear the canvas
   gl.clearColor(0, 0, 0, 0);

@@ -215,7 +215,7 @@ export const matrix4x4 = {
     ];
   },
 
-  /** Multiply two 3x3 matrixes together */
+  /** Multiply two 4x4 matrixes together */
   multiply: function (a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
     const MATRIX_SIZE = 4;
 

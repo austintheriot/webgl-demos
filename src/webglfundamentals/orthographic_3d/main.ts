@@ -78,84 +78,84 @@ const main = async () => {
 const initUI = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   window.addEventListener('resize', () => render(gl, canvas));
-  const scaleXInput = document.querySelector('#scale-x') as HTMLInputElement;
+  const scaleXInput = document.querySelector('#scaleX') as HTMLInputElement;
   scaleXInput.value = scaleX.toString();
   scaleXInput.addEventListener('input', (e: Event) => {
     scaleX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const scaleYInput = document.querySelector('#scale-y') as HTMLInputElement;
+  const scaleYInput = document.querySelector('#scaleY') as HTMLInputElement;
   scaleYInput.value = scaleY.toString();
   scaleYInput.addEventListener('input', (e: Event) => {
     scaleY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const scaleZInput = document.querySelector('#scale-z') as HTMLInputElement;
+  const scaleZInput = document.querySelector('#scaleZ') as HTMLInputElement;
   scaleZInput.value = scaleZ.toString();
   scaleZInput.addEventListener('input', (e: Event) => {
     scaleZ = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const translateXInput = document.querySelector('#translate-x') as HTMLInputElement;
+  const translateXInput = document.querySelector('#translateX') as HTMLInputElement;
   translateXInput.value = translateX.toString();
   translateXInput.addEventListener('input', (e: Event) => {
     translateX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const translateYInput = document.querySelector('#translate-y') as HTMLInputElement;
+  const translateYInput = document.querySelector('#translateY') as HTMLInputElement;
   translateYInput.value = translateY.toString();
   translateYInput.addEventListener('input', (e: Event) => {
     translateY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const translateZInput = document.querySelector('#translate-z') as HTMLInputElement;
+  const translateZInput = document.querySelector('#translateZ') as HTMLInputElement;
   translateZInput.value = translateZ.toString();
   translateZInput.addEventListener('input', (e: Event) => {
     translateZ = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const rotateXInput = document.querySelector('#rotate-x') as HTMLInputElement;
+  const rotateXInput = document.querySelector('#rotateX') as HTMLInputElement;
   rotateXInput.value = rotateX.toString();
   rotateXInput.addEventListener('input', (e: Event) => {
     rotateX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const rotateYInput = document.querySelector('#rotate-y') as HTMLInputElement;
+  const rotateYInput = document.querySelector('#rotateY') as HTMLInputElement;
   rotateYInput.value = rotateY.toString();
   rotateYInput.addEventListener('input', (e: Event) => {
     rotateY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const rotateZInput = document.querySelector('#rotate-z') as HTMLInputElement;
+  const rotateZInput = document.querySelector('#rotateZ') as HTMLInputElement;
   rotateZInput.value = rotateZ.toString();
   rotateZInput.addEventListener('input', (e: Event) => {
     rotateZ = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const originXInput = document.querySelector('#origin-x') as HTMLInputElement;
+  const originXInput = document.querySelector('#originX') as HTMLInputElement;
   originXInput.value = originX.toString();
   originXInput.addEventListener('input', (e: Event) => {
     originX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const originYInput = document.querySelector('#origin-y') as HTMLInputElement;
+  const originYInput = document.querySelector('#originY') as HTMLInputElement;
   originYInput.value = originY.toString();
   originYInput.addEventListener('input', (e: Event) => {
     originY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const originZInput = document.querySelector('#origin-z') as HTMLInputElement;
+  const originZInput = document.querySelector('#originZ') as HTMLInputElement;
   originZInput.value = originZ.toString();
   originZInput.addEventListener('input', (e: Event) => {
     originZ = (e.target as HTMLInputElement).valueAsNumber;
@@ -182,11 +182,12 @@ const setTransformationMatrix = () => {
 const render = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement) => {
   resizeCanvasToDisplaySize(canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  gl.enable(gl.CULL_FACE);
+  gl.enable(gl.CULL_FACE); // do not draw faces that are facing "backwards"
+  gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
 
   // Clear the canvas
   gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // draw
   const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times

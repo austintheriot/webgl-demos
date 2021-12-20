@@ -71,28 +71,28 @@ const main = async () => {
 const initUI = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   window.addEventListener('resize', () => render(gl, canvas));
-  const scaleXInput = document.querySelector('#scale-x') as HTMLInputElement;
+  const scaleXInput = document.querySelector('#scaleX') as HTMLInputElement;
   scaleXInput.value = scaleX.toString();
   scaleXInput.addEventListener('input', (e: Event) => {
     scaleX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const scaleYInput = document.querySelector('#scale-y') as HTMLInputElement;
+  const scaleYInput = document.querySelector('#scaleY') as HTMLInputElement;
   scaleYInput.value = scaleY.toString();
   scaleYInput.addEventListener('input', (e: Event) => {
     scaleY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const translateXInput = document.querySelector('#translate-x') as HTMLInputElement;
+  const translateXInput = document.querySelector('#translateX') as HTMLInputElement;
   translateXInput.value = translateX.toString();
   translateXInput.addEventListener('input', (e: Event) => {
     translateX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const translateYInput = document.querySelector('#translate-y') as HTMLInputElement;
+  const translateYInput = document.querySelector('#translateY') as HTMLInputElement;
   translateYInput.value = translateY.toString();
   translateYInput.addEventListener('input', (e: Event) => {
     translateY = (e.target as HTMLInputElement).valueAsNumber;
@@ -106,14 +106,14 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const originXInput = document.querySelector('#origin-x') as HTMLInputElement;
+  const originXInput = document.querySelector('#originX') as HTMLInputElement;
   originXInput.value = originX.toString();
   originXInput.addEventListener('input', (e: Event) => {
     originX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const originYInput = document.querySelector('#origin-y') as HTMLInputElement;
+  const originYInput = document.querySelector('#originY') as HTMLInputElement;
   originYInput.value = originY.toString();
   originYInput.addEventListener('input', (e: Event) => {
     originY = (e.target as HTMLInputElement).valueAsNumber;

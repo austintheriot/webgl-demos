@@ -5,6 +5,8 @@ let scaleY = 1;
 let rotate = 0;
 let translateX = 0;
 let translateY = 0;
+let originX = 0;
+let originY = 0;
 let canvas: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
 let matrixUniformLocation: WebGLUniformLocation;
@@ -69,28 +71,52 @@ const main = async () => {
 const initUI = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   window.addEventListener('resize', () => render(gl, canvas));
-  (document.querySelector('#scale-x') as HTMLInputElement).addEventListener('input', (e: Event) => {
+  const scaleXInput = document.querySelector('#scale-x') as HTMLInputElement;
+  scaleXInput.value = scaleX.toString();
+  scaleXInput.addEventListener('input', (e: Event) => {
     scaleX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  (document.querySelector('#scale-y') as HTMLInputElement).addEventListener('input', (e: Event) => {
+  const scaleYInput = document.querySelector('#scale-y') as HTMLInputElement;
+  scaleYInput.value = scaleY.toString();
+  scaleYInput.addEventListener('input', (e: Event) => {
     scaleY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  (document.querySelector('#translate-x') as HTMLInputElement).addEventListener('input', (e: Event) => {
+  const translateXInput = document.querySelector('#translate-x') as HTMLInputElement;
+  translateXInput.value = translateX.toString();
+  translateXInput.addEventListener('input', (e: Event) => {
     translateX = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  (document.querySelector('#translate-y') as HTMLInputElement).addEventListener('input', (e: Event) => {
+  const translateYInput = document.querySelector('#translate-y') as HTMLInputElement;
+  translateYInput.value = translateY.toString();
+  translateYInput.addEventListener('input', (e: Event) => {
     translateY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
-  (document.querySelector('#rotation') as HTMLInputElement).addEventListener('input', (e: Event) => {
+  const rotateInput = document.querySelector('#rotate') as HTMLInputElement;
+  rotateInput.value = rotate.toString();
+  rotateInput.addEventListener('input', (e: Event) => {
     rotate = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const originXInput = document.querySelector('#origin-x') as HTMLInputElement;
+  originXInput.value = originX.toString();
+  originXInput.addEventListener('input', (e: Event) => {
+    originX = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const originYInput = document.querySelector('#origin-y') as HTMLInputElement;
+  originYInput.value = originY.toString();
+  originYInput.addEventListener('input', (e: Event) => {
+    originY = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
@@ -135,6 +161,7 @@ const setTransformationMatrix = () => {
   matrix = matrix3x3.rotate(matrix, rotate);
   matrix = matrix3x3.scale(matrix, 1, -1); // flip y
   matrix = matrix3x3.scale(matrix, scaleX, scaleY);
+  matrix = matrix3x3.translate(matrix, originX, originY);
   gl.uniformMatrix3fv(matrixUniformLocation, false, matrix);
 }
 

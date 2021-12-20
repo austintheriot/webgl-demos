@@ -146,25 +146,34 @@ export const matrix3x3 = {
 
 export type Matrix4x4 = [
   number, number, number, number,
-  number, number, number, number, 
-  number, number, number, number, 
+  number, number, number, number,
+  number, number, number, number,
   number, number, number, number,
 ];
 
 export const matrix4x4 = {
-  createTranslationMatrix: (tx: number, ty: number, tz: number): Matrix4x4 => {
+  createIdentityMatrix: (): Matrix4x4 => {
     return [
-       1,  0,  0,  0,
-       0,  1,  0,  0,
-       0,  0,  1,  0,
-       tx, ty, tz, 1,
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
     ];
   },
- 
+
+  createTranslationMatrix: (tx: number, ty: number, tz: number): Matrix4x4 => {
+    return [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      tx, ty, tz, 1,
+    ];
+  },
+
   createXRotationMatrix: (angleInRadians: number): Matrix4x4 => {
     const c = Math.cos(angleInRadians);
     const s = Math.sin(angleInRadians);
- 
+
     return [
       1, 0, 0, 0,
       0, c, s, 0,
@@ -172,11 +181,11 @@ export const matrix4x4 = {
       0, 0, 0, 1,
     ];
   },
- 
+
   createYRotationMatrix: (angleInRadians: number): Matrix4x4 => {
     const c = Math.cos(angleInRadians);
     const s = Math.sin(angleInRadians);
- 
+
     return [
       c, 0, -s, 0,
       0, 1, 0, 0,
@@ -184,25 +193,25 @@ export const matrix4x4 = {
       0, 0, 0, 1,
     ];
   },
- 
+
   createZRotationMatrix: (angleInRadians: number): Matrix4x4 => {
     const c = Math.cos(angleInRadians);
     const s = Math.sin(angleInRadians);
- 
+
     return [
-       c, s, 0, 0,
+      c, s, 0, 0,
       -s, c, 0, 0,
-       0, 0, 1, 0,
-       0, 0, 0, 1,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
     ];
   },
- 
-  createScalingMatrix: function(sx: number, sy: number, sz: number): Matrix4x4 {
+
+  createScalingMatrix: function (sx: number, sy: number, sz: number): Matrix4x4 {
     return [
-      sx, 0,  0,  0,
-      0, sy,  0,  0,
-      0,  0, sz,  0,
-      0,  0,  0,  1,
+      sx, 0, 0, 0,
+      0, sy, 0, 0,
+      0, 0, sz, 0,
+      0, 0, 0, 1,
     ];
   },
 
@@ -243,7 +252,7 @@ export const matrix4x4 = {
     const a31 = a[3 * MATRIX_SIZE + 1];
     const a32 = a[3 * MATRIX_SIZE + 2];
     const a33 = a[3 * MATRIX_SIZE + 3];
- 
+
     return [
       b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
       b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31,

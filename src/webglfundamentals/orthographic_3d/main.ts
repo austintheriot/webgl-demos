@@ -1,12 +1,18 @@
-import { createProgram, createShader, err, matrix3x3, resizeCanvasToDisplaySize } from "../utils";
+import { createProgram, createShader, err, matrix4x4, resizeCanvasToDisplaySize } from "../utils";
+import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
 let scaleX = 1;
 let scaleY = 1;
-let rotate = 0;
+let scaleZ = 1;
+let rotateX = 0;
+let rotateY = 0;
+let rotateZ = 0;
 let translateX = 0;
 let translateY = 0;
+let translateZ = 0;
 let originX = 0;
 let originY = 0;
+let originZ = 0;
 let canvas: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
 let matrixUniformLocation: WebGLUniformLocation;
@@ -38,9 +44,8 @@ const main = async () => {
 
   // look up where the vertex data needs to go
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-  const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
+  const colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
   matrixUniformLocation = gl.getUniformLocation(program, 'u_matrix') as WebGLUniformLocation;
-  const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
 
   // VERTEX POSITION BUFFER //////////////////////////////////////////////////////////////////
   // Create a buffer and put three 2d clip space points in it
@@ -48,17 +53,19 @@ const main = async () => {
   if (!positionBuffer) throw err('error creating position buffer', { positionBuffer });
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.enableVertexAttribArray(positionAttributeLocation);
-  const size = 2;          // 2 components per iteration - get first 2 values from buffer, then next 2, etc.
-  const type = gl.FLOAT;   // the data is 32bit floats
-  const normalize = false; // don't normalize the data
-  const stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  const positionBufferOffset = 0;        // start at the beginning of the buffer
-  gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, positionBufferOffset)
-  loadVertexPositionsIntoBuffer(gl);
+  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letter_f_3d_vertices), gl.STATIC_DRAW);
+
+  // COLOR POSITION BUFFER //////////////////////////////////////////////////////////////////
+  // Create a buffer and put three 2d clip space points in it
+  const colorBuffer = gl.createBuffer();
+  if (!colorBuffer) throw err('error creating position buffer', { colorBuffer });
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.enableVertexAttribArray(colorAttributeLocation);
+  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letter_f_3d_colors), gl.STATIC_DRAW);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
-  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-  gl.uniform4f(colorUniformLocation, 1, 0, 0, 1);
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   setTransformationMatrix();
 
@@ -85,6 +92,13 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
+  const scaleZInput = document.querySelector('#scale-z') as HTMLInputElement;
+  scaleZInput.value = scaleZ.toString();
+  scaleZInput.addEventListener('input', (e: Event) => {
+    scaleZ = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
   const translateXInput = document.querySelector('#translate-x') as HTMLInputElement;
   translateXInput.value = translateX.toString();
   translateXInput.addEventListener('input', (e: Event) => {
@@ -99,10 +113,31 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const rotateInput = document.querySelector('#rotate') as HTMLInputElement;
-  rotateInput.value = rotate.toString();
-  rotateInput.addEventListener('input', (e: Event) => {
-    rotate = (e.target as HTMLInputElement).valueAsNumber;
+  const translateZInput = document.querySelector('#translate-z') as HTMLInputElement;
+  translateZInput.value = translateZ.toString();
+  translateZInput.addEventListener('input', (e: Event) => {
+    translateZ = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const rotateXInput = document.querySelector('#rotate-x') as HTMLInputElement;
+  rotateXInput.value = rotateX.toString();
+  rotateXInput.addEventListener('input', (e: Event) => {
+    rotateX = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const rotateYInput = document.querySelector('#rotate-y') as HTMLInputElement;
+  rotateYInput.value = rotateY.toString();
+  rotateYInput.addEventListener('input', (e: Event) => {
+    rotateY = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const rotateZInput = document.querySelector('#rotate-z') as HTMLInputElement;
+  rotateZInput.value = rotateZ.toString();
+  rotateZInput.addEventListener('input', (e: Event) => {
+    rotateZ = (e.target as HTMLInputElement).valueAsNumber;
     setTransformationMatrix();
     render(gl, canvas);
   });
@@ -120,49 +155,27 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
-}
-
-/** Load vertices into vertex position buffer */
-const loadVertexPositionsIntoBuffer = (gl: WebGLRenderingContext) => {
-  // copy javascript data into WebGL buffer
-  // shape of an "F"
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    // left column
-    0, 0,
-    0.1, 0,
-    0, 0.5,
-    0, 0.5,
-    0.1, 0,
-    0.1, 0.5,
-
-    // top rung
-    0.1, 0,
-    0.33, 0,
-    0.1, 0.1,
-    0.1, 0.1,
-    0.33, 0,
-    0.33, 0.1,
-
-    // middle rung
-    0.1, 0.2,
-    0.25, 0.2,
-    0.1, 0.3,
-    0.1, 0.3,
-    0.25, 0.2,
-    0.25, 0.3,
-  ]), gl.STATIC_DRAW);
+  const originZInput = document.querySelector('#origin-z') as HTMLInputElement;
+  originZInput.value = originZ.toString();
+  originZInput.addEventListener('input', (e: Event) => {
+    originZ = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
 }
 
 /** Update transformation matrix with new transformation state */
 const setTransformationMatrix = () => {
   // create updated transformation matrix
-  let matrix = matrix3x3.createIdentityMatrix();
-  matrix = matrix3x3.translate(matrix, translateX, translateY);
-  matrix = matrix3x3.rotate(matrix, rotate);
-  matrix = matrix3x3.scale(matrix, 1, -1); // flip y
-  matrix = matrix3x3.scale(matrix, scaleX, scaleY);
-  matrix = matrix3x3.translate(matrix, originX, originY);
-  gl.uniformMatrix3fv(matrixUniformLocation, false, matrix);
+  let matrix = matrix4x4.createIdentityMatrix();
+  matrix = matrix4x4.translate(matrix, translateX, translateY, translateZ);
+  matrix = matrix4x4.rotateX(matrix, rotateX);
+  matrix = matrix4x4.rotateY(matrix, rotateY);
+  matrix = matrix4x4.rotateZ(matrix, rotateZ);
+  matrix = matrix4x4.scale(matrix, 1, -1, 1); // flip y
+  matrix = matrix4x4.scale(matrix, scaleX, scaleY, scaleZ); // apply specified scale transformation
+  matrix = matrix4x4.translate(matrix, originX, originY, originZ); // move origin for object
+  gl.uniformMatrix4fv(matrixUniformLocation, false, matrix);
 }
 
 /** Draw to canvas */
@@ -177,7 +190,7 @@ const render = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement) => {
   // draw
   const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
   const offset = 0;
-  const count = 18; // 18 / 3 vertices = 6 triangles to draw
+  const count = letter_f_3d_vertices.length / 3;
   gl.drawArrays(primitiveType, offset, count);
 }
 

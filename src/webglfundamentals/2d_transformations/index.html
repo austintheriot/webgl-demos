@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D Transformations</title>
+  <script src="main.ts" defer type="module"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      position: 'relative';
+    }
+
+    canvas {
+      width: 100vmin;
+      max-width: 1000px;
+      object-fit: contain;
+    }
+
+    .input-container {
+      position: absolute;
+      z-index: 1;
+      width: 200px;
+      top: 0;
+      left: 0;
+      background-color: #0002;
+      padding: 1rem;
+      border-radius: 5px;
+    }
+
+    input[type=range] {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas></canvas>
+  <div class="input-container">
+    <label>
+      Scale X
+      <input type="range" id="scale-x" min="-2" max="2" step="0.01" value="1">
+    </label>
+    <label>
+      Scale Y
+      <input type="range" id="scale-y" min="-2" max="2" step="0.01" value="1">
+    </label>
+    <label>
+      Translate X
+      <input type="range" id="translate-x" min="-2" max="2" step="0.01" value="0">
+    </label>
+    <label>
+      Translate Y
+      <input type="range" id="translate-y" min="-2" max="2" step="0.01" value="0">
+    </label>
+    <label>
+      Rotation (radians)
+      <input type="range" id="rotation" min="-6.28" max="6.28" step="0.01" value="0">
+    </label>
+  </div>
+</body>
+
+</html>

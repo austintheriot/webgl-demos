@@ -9,11 +9,13 @@ let rotateY = degreesToRadians(30);
 let rotateZ = degreesToRadians(30);
 let translateX = 0;
 let translateY = 0;
-let translateZ = 0;
+let translateZ = -1;
 let originX = 0;
 let originY = 0;
 let originZ = 0;
-let perspectiveIntensity = 1;
+let fieldOfView = degreesToRadians(60);
+let zNear = 1;
+let zFar = 2000;
 let canvas: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
 let matrixUniformLocation: WebGLUniformLocation;
@@ -163,19 +165,12 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
-  const perspectiveIntensityInput = document.querySelector('#perspectiveIntensity') as HTMLInputElement;
-  perspectiveIntensityInput.value = perspectiveIntensity.toString();
-  perspectiveIntensityInput.addEventListener('input', (e: Event) => {
-    perspectiveIntensity = (e.target as HTMLInputElement).valueAsNumber;
-    setTransformationMatrix();
-    render(gl, canvas);
-  });
 }
 
 /** Update transformation matrix with new transformation state */
 const setTransformationMatrix = () => {
   // create updated transformation matrix
-  let matrix = matrix4x4.createPerspectiveMatrix(perspectiveIntensity);
+  let matrix = matrix4x4.createPerspectiveMatrix(fieldOfView, gl.canvas.width / gl.canvas.height, zNear, zFar);
   matrix = matrix4x4.translate(matrix, translateX, translateY, translateZ);
   matrix = matrix4x4.rotateX(matrix, rotateX);
   matrix = matrix4x4.rotateY(matrix, rotateY);

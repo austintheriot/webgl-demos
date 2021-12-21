@@ -234,12 +234,15 @@ export const matrix4x4 = {
   },
 
   /** Transforms x & y by shrinking things farther away */
-  createPerspectiveMatrix(perspectiveIntensity: number): Matrix4x4 {
+  createPerspectiveMatrix(fieldOfViewInRadians: number, aspect: number, near: number, far: number): Matrix4x4 {
+    var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
+    var rangeInv = 1.0 / (near - far);
+ 
     return [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, perspectiveIntensity,
-      0, 0, 0, 1,
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (near + far) * rangeInv, -1,
+      0, 0, near * far * rangeInv * 2, 0
     ];
   },
 

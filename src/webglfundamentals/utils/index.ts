@@ -233,6 +233,16 @@ export const matrix4x4 = {
     ];
   },
 
+  /** Transforms x & y by shrinking things farther away */
+  createPerspectiveMatrix(perspectiveIntensity: number): Matrix4x4 {
+    return [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, perspectiveIntensity,
+      0, 0, 0, 1,
+    ];
+  },
+
   /** Multiply two 4x4 matrixes together */
   multiply: function (a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
     const MATRIX_SIZE = 4;

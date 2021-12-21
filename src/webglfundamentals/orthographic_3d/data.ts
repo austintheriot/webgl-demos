@@ -1,5 +1,4 @@
 export const letter_f_3d_vertices = [
-  // left column front
  // left column front
  0,   0,  0,
  0, 0.5,  0,

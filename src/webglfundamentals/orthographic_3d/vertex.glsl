@@ -8,7 +8,7 @@ uniform mat4 u_matrix;
  
 void main() {
   // transform position using matrix transformation
-  gl_Position = a_position * u_matrix;
+  gl_Position = u_matrix * a_position;
 
   v_color = a_color;
 }

@@ -152,6 +152,16 @@ export type Matrix4x4 = [
 ];
 
 export const matrix4x4 = {
+  createProjectionMatrix: function(width: number, height: number, depth: number): Matrix4x4 {
+    // Note: This matrix flips the Y axis so 0 is at the top.
+    return [
+       2 / width, 0, 0, 0,
+       0, -2 / height, 0, 0,
+       0, 0, 2 / depth, 0,
+      -1, 1, 0, 1,
+    ];
+  },
+
   createIdentityMatrix: (): Matrix4x4 => {
     return [
       1, 0, 0, 0,
@@ -273,23 +283,23 @@ export const matrix4x4 = {
     ];
   },
 
-  translate: (m: Matrix4x4, tx: number, ty: number, tz: number) => {
+  translate: (m: Matrix4x4, tx: number, ty: number, tz: number): Matrix4x4 => {
     return matrix4x4.multiply(m, matrix4x4.createTranslationMatrix(tx, ty, tz));
   },
 
-  scale: (m: Matrix4x4, sx: number, sy: number, sz: number) => {
+  scale: (m: Matrix4x4, sx: number, sy: number, sz: number): Matrix4x4 => {
     return matrix4x4.multiply(m, matrix4x4.createScalingMatrix(sx, sy, sz));
   },
 
-  rotateX: (m: Matrix4x4, angleInRadians: number) => {
+  rotateX: (m: Matrix4x4, angleInRadians: number): Matrix4x4 => {
     return matrix4x4.multiply(m, matrix4x4.createXRotationMatrix(angleInRadians));
   },
 
-  rotateY: (m: Matrix4x4, angleInRadians: number) => {
+  rotateY: (m: Matrix4x4, angleInRadians: number): Matrix4x4 => {
     return matrix4x4.multiply(m, matrix4x4.createYRotationMatrix(angleInRadians));
   },
 
-  rotateZ: (m: Matrix4x4, angleInRadians: number) => {
+  rotateZ: (m: Matrix4x4, angleInRadians: number): Matrix4x4 => {
     return matrix4x4.multiply(m, matrix4x4.createZRotationMatrix(angleInRadians));
   },
 }

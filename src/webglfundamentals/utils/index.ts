@@ -159,6 +159,31 @@ export type Matrix4x4 = [
   number, number, number, number,
 ];
 
+export type Vec2 = [number, number];
+export type Vec3 = [number, number, number];
+export type Vec4 = [number, number, number, number];
+
+/** Calculates the cross product of two vec3s */
+export const crossVec3 = (a: Vec3, b: Vec3): Vec3 => {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+};
+
+/** Subtracts two vec3s */
+export const subtractVec3 = (a: Vec3, b: Vec3): Vec3 => {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+};
+
+/** Normalizes a vector to length of 1 */
+export const normalizeVec3 = (v: Vec3): Vec3 => {
+  const length = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+  // make sure we don't divide by 0.
+  if (length > 0.00001) {
+    return [v[0] / length, v[1] / length, v[2] / length];
+  } else {
+    return [0, 0, 0];
+  }
+}
+
 export const matrix4x4 = {
   createProjectionMatrix: function (width: number, height: number, depth: number): Matrix4x4 {
     // Note: This matrix flips the Y axis so 0 is at the top.
@@ -246,6 +271,22 @@ export const matrix4x4 = {
     ];
   },
 
+  createLookAtMatrix: (cameraPosition: Vec3, target: Vec3, up: Vec3): Matrix4x4 => {
+    var zAxis = normalizeVec3(subtractVec3(cameraPosition, target));
+    var xAxis = normalizeVec3(crossVec3(up, zAxis));
+    var yAxis = normalizeVec3(crossVec3(zAxis, xAxis));
+ 
+    return [
+       xAxis[0], xAxis[1], xAxis[2], 0,
+       yAxis[0], yAxis[1], yAxis[2], 0,
+       zAxis[0], zAxis[1], zAxis[2], 0,
+       cameraPosition[0],
+       cameraPosition[1],
+       cameraPosition[2],
+       1,
+    ];
+  },
+
   /** Multiply two 4x4 matrixes together */
   multiply: function (a: Matrix4x4, b: Matrix4x4): Matrix4x4 {
     const MATRIX_SIZE = 4;
@@ -324,6 +365,7 @@ export const matrix4x4 = {
     return matrix4x4.multiply(m, matrix4x4.createZRotationMatrix(angleInRadians));
   },
 
+  /** Calculates the inverse of a 4x4 matrix */
   inverse: (m: Matrix4x4): Matrix4x4 => {
     const MATRIX_SIZE = 4;
     const m00 = m[0 * MATRIX_SIZE + 0];

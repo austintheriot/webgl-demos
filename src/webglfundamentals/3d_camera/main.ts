@@ -1,4 +1,4 @@
-import { createProgram, createShader, degreesToRadians, err, matrix4x4, radiansToDegrees, resizeCanvasToDisplaySize } from "../utils";
+import { createProgram, createShader, degreesToRadians, err, matrix4x4, radiansToDegrees, resizeCanvasToDisplaySize, Vec3 } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
 const NUM_OF_FS = 6;
@@ -12,14 +12,16 @@ let rotateY = degreesToRadians(0);
 let rotateZ = degreesToRadians(0);
 let translateX = 0;
 let translateY = 0;
-let translateZ = -2.5;
+let translateZ = -5;
 let originX = 0;
 let originY = 0;
 let originZ = 0;
 let fieldOfViewRadians = degreesToRadians(60);
 let cameraAngleRadians = degreesToRadians(0);
-let cameraDistance = F_RADIUS * 1.5;
-let zNear = 1;
+let cameraX = 0;
+let cameraY = -0.25;
+let cameraZ = F_RADIUS * 7.5;
+let zNear = 0.1;
 let zFar = 2000;
 let canvas: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
@@ -101,8 +103,13 @@ const render = () => {
   gl.enable(gl.CULL_FACE); // do not draw faces that are facing "backwards"
   gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
 
+  const firstFPosition: Vec3 = [F_RADIUS, 0, 0];
   let cameraMatrix = matrix4x4.createYRotationMatrix(cameraAngleRadians);
-  cameraMatrix = matrix4x4.translate(cameraMatrix, 0, 0, -cameraDistance * 1.5);
+  cameraMatrix = matrix4x4.translate(cameraMatrix, cameraX, cameraY, cameraZ);
+  // extract camera position out of camera matrix
+  const cameraPosition: Vec3 = [cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]];
+  const up: Vec3 = [0, 1, 0];
+  cameraMatrix = matrix4x4.createLookAtMatrix(cameraPosition, firstFPosition, up);
 
   // get the view matrix (how to move the world so that the camera is positioned correctly in space)
   // this is the inverse of the camera matrix, because we want to move the world and not the camera
@@ -131,7 +138,10 @@ const render = () => {
 /** Create UI and attach event listeners to update global variables */
 const initInputs = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
-  window.addEventListener('resize', () => render());
+  window.addEventListener('resize', () => {
+    updateProjectionMatrix();
+    render();
+  });
   const scaleXInput = document.querySelector('#scaleX') as HTMLInputElement;
   scaleXInput.value = scaleX.toString();
   scaleXInput.addEventListener('input', (e: Event) => {
@@ -244,10 +254,24 @@ const initInputs = () => {
     updateProjectionMatrix();
     render();
   });
-  const cameraDistanceInput = document.querySelector('#cameraDistance') as HTMLInputElement;
-  cameraDistanceInput.value = cameraDistance.toString();
-  cameraDistanceInput.addEventListener('input', (e: Event) => {
-    cameraDistance = (e.target as HTMLInputElement).valueAsNumber;
+  const cameraXInput = document.querySelector('#cameraX') as HTMLInputElement;
+  cameraXInput.value = cameraX.toString();
+  cameraXInput.addEventListener('input', (e: Event) => {
+    cameraX = (e.target as HTMLInputElement).valueAsNumber;
+    updateProjectionMatrix();
+    render();
+  });
+  const cameraYInput = document.querySelector('#cameraY') as HTMLInputElement;
+  cameraYInput.value = cameraY.toString();
+  cameraYInput.addEventListener('input', (e: Event) => {
+    cameraY = (e.target as HTMLInputElement).valueAsNumber;
+    updateProjectionMatrix();
+    render();
+  });
+  const cameraZInput = document.querySelector('#cameraZ') as HTMLInputElement;
+  cameraZInput.value = cameraZ.toString();
+  cameraZInput.addEventListener('input', (e: Event) => {
+    cameraZ = (e.target as HTMLInputElement).valueAsNumber;
     updateProjectionMatrix();
     render();
   });

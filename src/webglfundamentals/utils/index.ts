@@ -48,6 +48,14 @@ export const resizeCanvasToDisplaySize = (canvas: HTMLCanvasElement) => {
   return needResize;
 }
 
+export const radiansToDegrees = (r: number) => {
+  return r * 180 / Math.PI;
+}
+
+export const degreesToRadians = (d: number) => {
+  return d * Math.PI / 180;
+}
+
 /** 3x3 matrix */
 export type Matrix3x3 = [
   number, number, number,

@@ -1,12 +1,12 @@
-import { createProgram, createShader, err, matrix4x4, resizeCanvasToDisplaySize } from "../utils";
+import { createProgram, createShader, degreesToRadians, err, matrix4x4, radiansToDegrees, resizeCanvasToDisplaySize } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
 let scaleX = 1;
 let scaleY = 1;
 let scaleZ = 1;
-let rotateX = 0.314;
-let rotateY = 0.314;
-let rotateZ = 0.314;
+let rotateX = degreesToRadians(30);
+let rotateY = degreesToRadians(30);
+let rotateZ = degreesToRadians(30);
 let translateX = 0;
 let translateY = 0;
 let translateZ = 0;
@@ -121,23 +121,23 @@ const initUI = () => {
     render(gl, canvas);
   });
   const rotateXInput = document.querySelector('#rotateX') as HTMLInputElement;
-  rotateXInput.value = rotateX.toString();
+  rotateXInput.value = radiansToDegrees(rotateX).toString();
   rotateXInput.addEventListener('input', (e: Event) => {
-    rotateX = (e.target as HTMLInputElement).valueAsNumber;
+    rotateX = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
     setTransformationMatrix();
     render(gl, canvas);
   });
   const rotateYInput = document.querySelector('#rotateY') as HTMLInputElement;
-  rotateYInput.value = rotateY.toString();
+  rotateYInput.value = radiansToDegrees(rotateY).toString();
   rotateYInput.addEventListener('input', (e: Event) => {
-    rotateY = (e.target as HTMLInputElement).valueAsNumber;
+    rotateY = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
     setTransformationMatrix();
     render(gl, canvas);
   });
   const rotateZInput = document.querySelector('#rotateZ') as HTMLInputElement;
-  rotateZInput.value = rotateZ.toString();
+  rotateZInput.value = radiansToDegrees(rotateZ).toString();
   rotateZInput.addEventListener('input', (e: Event) => {
-    rotateZ = (e.target as HTMLInputElement).valueAsNumber;
+    rotateZ = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
     setTransformationMatrix();
     render(gl, canvas);
   });

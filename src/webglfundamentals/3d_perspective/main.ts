@@ -1,19 +1,19 @@
 import { createProgram, createShader, degreesToRadians, err, matrix4x4, radiansToDegrees, resizeCanvasToDisplaySize } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
-let scaleX = 1;
-let scaleY = 1;
-let scaleZ = 1;
-let rotateX = degreesToRadians(30);
+let scaleX = 1.5;
+let scaleY = 1.5;
+let scaleZ = 1.5;
+let rotateX = degreesToRadians(120);
 let rotateY = degreesToRadians(30);
 let rotateZ = degreesToRadians(30);
-let translateX = 0;
+let translateX = 0.75;
 let translateY = 0;
-let translateZ = -1;
+let translateZ = -2;
 let originX = 0;
 let originY = 0;
 let originZ = 0;
-let fieldOfView = degreesToRadians(60);
+let fieldOfViewRadians = degreesToRadians(60);
 let zNear = 1;
 let zFar = 2000;
 let canvas: HTMLCanvasElement;
@@ -21,15 +21,12 @@ let gl: WebGLRenderingContext;
 let matrixUniformLocation: WebGLUniformLocation;
 
 const main = async () => {
+  initInputs();
+  
   canvas = document.querySelector('canvas') as HTMLCanvasElement;
   if (!canvas) throw err('canvas not found', { canvas });
   gl = canvas.getContext('webgl') as WebGLRenderingContext;
   if (!gl) throw err('WebGL not supported', { gl });
-
-  const WIDTH = 1800;
-  const HEIGHT = 1800;
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
 
   const [vertexShaderSource, fragmentShaderSource] = await Promise.all([
     fetch('./vertex.glsl'),
@@ -69,16 +66,43 @@ const main = async () => {
   gl.bufferData(gl.ARRAY_BUFFER, new Uint8ClampedArray(letter_f_3d_colors), gl.STATIC_DRAW);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   setTransformationMatrix();
-
-  initUI();
 
   render(gl, canvas);
 }
 
+/** Update transformation matrix with new transformation state */
+const setTransformationMatrix = () => {
+  let matrix = matrix4x4.createPerspectiveMatrix(fieldOfViewRadians, gl.canvas.clientWidth / gl.canvas.clientHeight, zNear, zFar);
+  matrix = matrix4x4.translate(matrix, translateX, translateY, translateZ);
+  matrix = matrix4x4.rotateX(matrix, rotateX);
+  matrix = matrix4x4.rotateY(matrix, rotateY);
+  matrix = matrix4x4.rotateZ(matrix, rotateZ);
+  matrix = matrix4x4.scale(matrix, scaleX, scaleY, scaleZ); // apply specified scale transformation
+  matrix = matrix4x4.translate(matrix, originX, originY, originZ); // move origin for object
+  gl.uniformMatrix4fv(matrixUniformLocation, false, matrix);
+}
+
+/** Draw to canvas */
+const render = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement) => {
+  resizeCanvasToDisplaySize(canvas);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  
+  // Clear the canvas
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.CULL_FACE); // do not draw faces that are facing "backwards"
+  gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
+
+  // draw
+  const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
+  const offset = 0;
+  const count = letter_f_3d_vertices.length / 3;
+  gl.drawArrays(primitiveType, offset, count);
+}
+
 /** Create UI and attach event listeners to update global variables */
-const initUI = () => {
+const initInputs = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   window.addEventListener('resize', () => render(gl, canvas));
   const scaleXInput = document.querySelector('#scaleX') as HTMLInputElement;
@@ -165,38 +189,28 @@ const initUI = () => {
     setTransformationMatrix();
     render(gl, canvas);
   });
+  const zNearInput = document.querySelector('#zNear') as HTMLInputElement;
+  zNearInput.value = zNear.toString();
+  zNearInput.addEventListener('input', (e: Event) => {
+    zNear = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const zFarInput = document.querySelector('#zFar') as HTMLInputElement;
+  zFarInput.value = zFar.toString();
+  zFarInput.addEventListener('input', (e: Event) => {
+    zFar = (e.target as HTMLInputElement).valueAsNumber;
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
+  const fieldOfViewInput = document.querySelector('#fieldOfView') as HTMLInputElement;
+  fieldOfViewInput.value = radiansToDegrees(fieldOfViewRadians).toString();
+  fieldOfViewInput.addEventListener('input', (e: Event) => {
+    fieldOfViewRadians = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
+    setTransformationMatrix();
+    render(gl, canvas);
+  });
 }
 
-/** Update transformation matrix with new transformation state */
-const setTransformationMatrix = () => {
-  // create updated transformation matrix
-  let matrix = matrix4x4.createPerspectiveMatrix(fieldOfView, gl.canvas.width / gl.canvas.height, zNear, zFar);
-  matrix = matrix4x4.translate(matrix, translateX, translateY, translateZ);
-  matrix = matrix4x4.rotateX(matrix, rotateX);
-  matrix = matrix4x4.rotateY(matrix, rotateY);
-  matrix = matrix4x4.rotateZ(matrix, rotateZ);
-  matrix = matrix4x4.scale(matrix, 1, -1, 1); // flip y
-  matrix = matrix4x4.scale(matrix, scaleX, scaleY, scaleZ); // apply specified scale transformation
-  matrix = matrix4x4.translate(matrix, originX, originY, originZ); // move origin for object
-  gl.uniformMatrix4fv(matrixUniformLocation, false, matrix);
-}
-
-/** Draw to canvas */
-const render = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement) => {
-  resizeCanvasToDisplaySize(canvas);
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-  
-  // Clear the canvas
-  gl.clearColor(0, 0, 0, 0);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.enable(gl.CULL_FACE); // do not draw faces that are facing "backwards"
-  gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
-
-  // draw
-  const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
-  const offset = 0;
-  const count = letter_f_3d_vertices.length / 3;
-  gl.drawArrays(primitiveType, offset, count);
-}
 
 main();

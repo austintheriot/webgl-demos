@@ -81,7 +81,7 @@ const initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINT
   return (2 * Math.random() - 1);
 }));
 const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-  return (2 * Math.random() - 1);
+  return Math.random();
 }));
 
 const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
@@ -147,14 +147,14 @@ const main = async () => {
 
   // initialize buffers
   positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
-  positionVboWrite = createVbo(gl, new Float32Array(NUM_POINTS), gl.DYNAMIC_COPY);
+  positionVboWrite = createVbo(gl, new Float32Array(NUM_POINTS * 3), gl.DYNAMIC_COPY);
   colorVbo = createVbo(gl, initialParticleColors);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   updateProjectionMatrix();
 
   // RENDER //////////////////////////////////////////////////////////////////
-  render();
+  animate();
 }
 
 
@@ -177,8 +177,6 @@ const render = () => {
   // update uniforms / buffers
   gl.uniform1f(deltaTimeUniformLocation, elapsedTime);
   [positionVboRead].forEach((vbo, i) => {
-    const location = gl.getAttribLocation(updateProgram, 'i_position');
-    console.log({ location });
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(i);
     gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 0, 0);
@@ -226,6 +224,11 @@ const render = () => {
   gl.uniformMatrix4fv(matrixUniformLocation, false, viewProjectionMatrix);
 
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
+}
+
+const animate = () => {
+  render();
+  requestAnimationFrame(animate);
 }
 
 const addToRotateCameraX = (amt: number) => {

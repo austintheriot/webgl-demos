@@ -25,6 +25,17 @@ const moveCameraXInput = document.querySelector('#moveCameraX') as HTMLInputElem
 const moveCameraYInput = document.querySelector('#moveCameraY') as HTMLInputElement;
 const moveCameraZInput = document.querySelector('#moveCameraZ') as HTMLInputElement;
 const dtInput = document.querySelector('#dt') as HTMLInputElement;
+const resetButton = document.querySelector('button') as HTMLButtonElement;
+
+const NUM_POINTS = 1_000_000;
+// create an arrays of random points
+const initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+  return (2 * Math.random() - 1);
+}));
+const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+  return Math.random();
+}));
+
 
 const ROTATE_CAMERA_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_CAMERA_X_MAX_RADIANS = degreesToRadians(60);
@@ -76,15 +87,6 @@ let prevDragX: number;
 let prevDragY: number;
 let mouseDown = false;
 
-const NUM_POINTS = 100_000;
-// create an arrays of random points
-const initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-  return (2 * Math.random() - 1);
-}));
-const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-  return Math.random();
-}));
-
 const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
   const vbo = gl.createBuffer();
   if (!vbo) throw new Error('error creating buffer');
@@ -99,7 +101,6 @@ const swapParticleVbos = function () {
   positionVboRead = positionVboWrite;
   positionVboWrite = tempBuffer;
 }
-
 
 const main = async () => {
   initUI();
@@ -154,7 +155,6 @@ const main = async () => {
   // RENDER //////////////////////////////////////////////////////////////////
   animate();
 }
-
 
 /** Update transformation matrix with new transformation state */
 const updateProjectionMatrix = () => {
@@ -222,6 +222,10 @@ const render = () => {
   gl.uniformMatrix4fv(matrixUniformLocation, false, viewProjectionMatrix);
 
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
+}
+
+const reset = () => {
+  positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
 }
 
 const animate = () => {
@@ -322,13 +326,16 @@ const initUI = () => {
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
+    const INCREMENT = 0.05;
     if (e.deltaY < 0) {
-      moveCameraZ *= 1.01;
+      moveCameraZ *= 1 + INCREMENT;
     } else {
-      moveCameraZ *= 0.99;
+      moveCameraZ *= 1 - INCREMENT;
     }
     updateProjectionMatrix();
   })
+
+  resetButton.onclick = reset;
 
   scaleXInput.value = scaleX.toString();
   scaleXInput.addEventListener('input', (e: Event) => {

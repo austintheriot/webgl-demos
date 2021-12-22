@@ -17,7 +17,36 @@ export const createShader = (gl: WebGLRenderingContext, type: number, source: st
   throw new Error(error);
 }
 
-export const createProgram = (gl: WebGLRenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader) => {
+export const createTransformFeedbackProgram = (
+  gl: WebGL2RenderingContext,
+  vertexShader: WebGLShader,
+  fragmentShader: WebGLShader,
+  transformFeedbackVaryings: string[]
+) => {
+  const program = gl.createProgram();
+  if (!program) throw err('error creating program', { program });
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+
+  if (transformFeedbackVaryings.length > 0) {
+    gl.transformFeedbackVaryings(
+      program,
+      transformFeedbackVaryings,
+      gl.INTERLEAVED_ATTRIBS)
+  }
+
+  gl.linkProgram(program);
+
+  const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+  if (success) return program;
+  const error = gl.getProgramInfoLog(program) || 'Failed to create program';
+  gl.deleteProgram(program);
+  throw new Error(error);
+}
+
+export const createProgram = <GL extends WebGLRenderingContext | WebGL2RenderingContext>(
+  gl: GL, vertexShader: WebGLShader, fragmentShader: WebGLShader
+) => {
   const program = gl.createProgram();
   if (!program) throw err('error creating program', { program });
   gl.attachShader(program, vertexShader);
@@ -275,15 +304,15 @@ export const matrix4x4 = {
     var zAxis = normalizeVec3(subtractVec3(cameraPosition, target));
     var xAxis = normalizeVec3(crossVec3(up, zAxis));
     var yAxis = normalizeVec3(crossVec3(zAxis, xAxis));
- 
+
     return [
-       xAxis[0], xAxis[1], xAxis[2], 0,
-       yAxis[0], yAxis[1], yAxis[2], 0,
-       zAxis[0], zAxis[1], zAxis[2], 0,
-       cameraPosition[0],
-       cameraPosition[1],
-       cameraPosition[2],
-       1,
+      xAxis[0], xAxis[1], xAxis[2], 0,
+      yAxis[0], yAxis[1], yAxis[2], 0,
+      zAxis[0], zAxis[1], zAxis[2], 0,
+      cameraPosition[0],
+      cameraPosition[1],
+      cameraPosition[2],
+      1,
     ];
   },
 

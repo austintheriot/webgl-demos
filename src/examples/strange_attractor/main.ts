@@ -1,5 +1,5 @@
 import {
-  createProgram, createShader, degreesToRadians, err, matrix4x4,
+  createProgram, createTransformFeedbackProgram, createShader, degreesToRadians, err, matrix4x4,
   radiansToDegrees, resizeCanvasToDisplaySize
 } from "../utils";
 
@@ -55,9 +55,19 @@ let zNear = 0.1;
 let zFar = 2000;
 
 let canvas: HTMLCanvasElement;
-let gl: WebGLRenderingContext;
+let gl: WebGL2RenderingContext;
+let updateProgram: WebGLProgram;
+let renderProgram: WebGLProgram;
 let matrixUniformLocation: WebGLUniformLocation;
+let deltaTimeUniformLocation: WebGLUniformLocation;
+let transformFeedback: WebGLTransformFeedback | null;
 let projectionMatrix = matrix4x4.createIdentityMatrix();
+let positionVboRead: WebGLBuffer;
+let positionVboWrite: WebGLBuffer;
+let colorVbo: WebGLBuffer;
+
+/** @todo - replace with real implementation */
+let elapsedTime: number = 0.001;
 
 let prevTouchX: number;
 let prevTouchY: number;
@@ -65,55 +75,80 @@ let prevDragX: number;
 let prevDragY: number;
 let mouseDown = false;
 
-// create an array of random points
 const NUM_POINTS = 100_000;
-const POINT_POSITION_ARRAY = new Array(NUM_POINTS * 3).fill(null).map(() => Math.random() * 2 - 1);
-const COLOR_ARRAY = new Array(NUM_POINTS * 3).fill(null).map(() => Math.random() * 2 - 1);
+// create an arrays of random points
+const initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+  return (2 * Math.random() - 1);
+}));
+const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+  return (2 * Math.random() - 1);
+}));
+
+const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
+  const vbo = gl.createBuffer();
+  if (!vbo) throw new Error('error creating buffer');
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, array, usage !== undefined ? usage : gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  return vbo;
+}
+
+const swapParticleVbos = function () {
+  const tempBuffer = positionVboRead;
+  positionVboRead = positionVboWrite;
+  positionVboWrite = tempBuffer;
+}
+
 
 const main = async () => {
-  initInputs();
+  initUI();
 
   canvas = document.querySelector('canvas') as HTMLCanvasElement;
   if (!canvas) throw err('canvas not found', { canvas });
-  gl = canvas.getContext('webgl2') as WebGLRenderingContext;
+  gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
   if (!gl) throw err('WebGL not supported', { gl });
 
-  const [vertexShaderSource, fragmentShaderSource] = await Promise.all([
-    fetch('./vertex.glsl'),
-    fetch('./fragment.glsl'),
-  ]).then(([vertex, fragment]) => Promise.all([
-    vertex.text(),
-    fragment.text()
+  // fetch all shader sources
+  const [
+    updateVertexShaderSource,
+    updateFragmentShaderSource,
+    drawVertexShaderSource,
+    drawFragmentShaderSource
+  ] = await Promise.all([
+    fetch('./update_vertex.glsl'),
+    fetch('./update_fragment.glsl'),
+    fetch('./draw_vertex.glsl'),
+    fetch('./draw_fragment.glsl'),
+  ]).then(([
+    updateVertex,
+    updateFragment,
+    drawVertex,
+    drawFragment
+  ]) => Promise.all([
+    updateVertex.text(),
+    updateFragment.text(),
+    drawVertex.text(),
+    drawFragment.text()
   ]));
 
   // create shaders from source code & link to program
-  const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-  const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-  const program = createProgram(gl, vertexShader, fragmentShader);
-  gl.useProgram(program);
+  const updateVertexShader = createShader(gl, gl.VERTEX_SHADER, updateVertexShaderSource);
+  const updateFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, updateFragmentShaderSource);
+  updateProgram = createTransformFeedbackProgram(gl, updateVertexShader, updateFragmentShader, ['o_position']);
+  transformFeedback = gl.createTransformFeedback();
+
+  const drawVertexShader = createShader(gl, gl.VERTEX_SHADER, drawVertexShaderSource);
+  const drawFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, drawFragmentShaderSource);
+  renderProgram = createProgram(gl, drawVertexShader, drawFragmentShader);
 
   // look up where the vertex data needs to go
-  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-  const colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
-  matrixUniformLocation = gl.getUniformLocation(program, 'u_matrix') as WebGLUniformLocation;
+  deltaTimeUniformLocation = gl.getUniformLocation(updateProgram, 'u_dt') as WebGLUniformLocation;
+  matrixUniformLocation = gl.getUniformLocation(renderProgram, 'u_matrix') as WebGLUniformLocation;
 
-  // VERTEX POSITION BUFFER //////////////////////////////////////////////////////////////////
-  // Create a buffer and put three 2d clip space points in it
-  const positionBuffer = gl.createBuffer();
-  if (!positionBuffer) throw err('error creating position buffer', { positionBuffer });
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.enableVertexAttribArray(positionAttributeLocation);
-  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(POINT_POSITION_ARRAY), gl.STATIC_DRAW);
-
-  // COLOR POSITION BUFFER //////////////////////////////////////////////////////////////////
-  // Create a buffer and put three 2d clip space points in it
-  const colorBuffer = gl.createBuffer();
-  if (!colorBuffer) throw err('error creating position buffer', { colorBuffer });
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.enableVertexAttribArray(colorAttributeLocation);
-  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(COLOR_ARRAY), gl.STATIC_DRAW);
+  // initialize buffers
+  positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
+  positionVboWrite = createVbo(gl, new Float32Array(NUM_POINTS), gl.DYNAMIC_COPY);
+  colorVbo = createVbo(gl, initialParticleColors);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   updateProjectionMatrix();
@@ -136,6 +171,32 @@ const updateProjectionMatrix = () => {
 
 /** Draw to canvas */
 const render = () => {
+  // update particle positions
+  gl.useProgram(updateProgram);
+
+  // update uniforms / buffers
+  gl.uniform1f(deltaTimeUniformLocation, elapsedTime);
+  [positionVboRead].forEach((vbo, i) => {
+    const location = gl.getAttribLocation(updateProgram, 'i_position');
+    console.log({ location });
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.enableVertexAttribArray(i);
+    gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 0, 0);
+  });
+
+  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
+  gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, positionVboWrite);
+  gl.enable(gl.RASTERIZER_DISCARD);
+  gl.beginTransformFeedback(gl.POINTS);
+  gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
+  gl.disable(gl.RASTERIZER_DISCARD);
+  gl.endTransformFeedback();
+  gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+  swapParticleVbos();
+
+  // render particles to canvas
+  gl.useProgram(renderProgram);
+
   resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
@@ -148,23 +209,20 @@ const render = () => {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
+  [positionVboRead, colorVbo].forEach((vbo, i) => {
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.enableVertexAttribArray(i);
+    gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 0, 0);
+  });
+
+  // set view projection matrix
   let cameraMatrix = matrix4x4.createIdentityMatrix();
   cameraMatrix = matrix4x4.rotateY(cameraMatrix, rotateCameraY);
   cameraMatrix = matrix4x4.rotateX(cameraMatrix, rotateCameraX);
   cameraMatrix = matrix4x4.rotateZ(cameraMatrix, rotateCameraZ);
   cameraMatrix = matrix4x4.translate(cameraMatrix, moveCameraX, moveCameraY, moveCameraZ);
-  // extract camera position out of camera matrix
-  // const cameraPosition: Vec3 = [cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]];
-  // const up: Vec3 = [0, 1, 0];
-  // const lookAt: Vec3 = [0, 0, 0];
-  // cameraMatrix = matrix4x4.createLookAtMatrix(cameraPosition, lookAt, up);
-
-  // get the view matrix (how to move the world so that the camera is positioned correctly in space)
-  // this is the inverse of the camera matrix, because we want to move the world and not the camera
   const viewMatrix = matrix4x4.inverse(cameraMatrix);
-
   const viewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
-
   gl.uniformMatrix4fv(matrixUniformLocation, false, viewProjectionMatrix);
 
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
@@ -184,7 +242,7 @@ const updateProjectionMatrixAndRender = () => {
 }
 
 /** Create UI and attach event listeners to update global variables */
-const initInputs = () => {
+const initUI = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   window.addEventListener('resize', updateProjectionMatrixAndRender);
 

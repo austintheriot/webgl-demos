@@ -24,6 +24,8 @@ const moveCameraXInput = document.querySelector('#moveCameraX') as HTMLInputElem
 const moveCameraYInput = document.querySelector('#moveCameraY') as HTMLInputElement;
 const moveCameraZInput = document.querySelector('#moveCameraZ') as HTMLInputElement;
 
+const ROTATE_CAMERA_Y_MIN_RADIANS = degreesToRadians(-60);
+const ROTATE_CAMERA_Y_MAX_RADIANS = degreesToRadians(60);
 let rotateCameraX = degreesToRadians(0);
 let rotateCameraY = degreesToRadians(0);
 let rotateCameraZ = degreesToRadians(0);
@@ -138,8 +140,8 @@ const render = () => {
   gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
 
   let cameraMatrix = matrix4x4.createIdentityMatrix();
-  cameraMatrix = matrix4x4.rotateX(cameraMatrix, rotateCameraX);
   cameraMatrix = matrix4x4.rotateY(cameraMatrix, rotateCameraY);
+  cameraMatrix = matrix4x4.rotateX(cameraMatrix, rotateCameraX);
   cameraMatrix = matrix4x4.rotateZ(cameraMatrix, rotateCameraZ);
   cameraMatrix = matrix4x4.translate(cameraMatrix, moveCameraX, moveCameraY, moveCameraZ);
   // extract camera position out of camera matrix
@@ -172,7 +174,7 @@ const initInputs = () => {
     let updated = false;
     switch (e.key) {
       case 'w':
-        rotateCameraX -= 0.1;
+        rotateCameraX = Math.max(rotateCameraX - 0.1, ROTATE_CAMERA_Y_MIN_RADIANS);
         rotateCameraXInput.value = radiansToDegrees(rotateCameraX).toString();
         updated = true;
         break;
@@ -182,7 +184,7 @@ const initInputs = () => {
         updated = true;
         break;
       case 's':
-        rotateCameraX += 0.1;
+        rotateCameraX = Math.min(rotateCameraX + 0.1, ROTATE_CAMERA_Y_MAX_RADIANS);
         rotateCameraXInput.value = radiansToDegrees(rotateCameraX).toString();
         updated = true;
         break;
@@ -306,6 +308,8 @@ const initInputs = () => {
   });
 
   rotateCameraYInput.value = radiansToDegrees(rotateCameraY).toString();
+  rotateCameraYInput.min = radiansToDegrees(ROTATE_CAMERA_Y_MIN_RADIANS).toString();
+  rotateCameraYInput.max = radiansToDegrees(ROTATE_CAMERA_Y_MAX_RADIANS).toString();
   rotateCameraYInput.addEventListener('input', (e: Event) => {
     rotateCameraY = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
     updateProjectionMatrix();

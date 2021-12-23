@@ -15,14 +15,36 @@ const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS *
 const ROTATE_CAMERA_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_CAMERA_X_MAX_RADIANS = degreesToRadians(60);
 
+const INITIAL_VALUES = {
+  rotateCameraX: 0,
+  rotateCameraY: 0,
+  rotateCameraZ: 0,
+
+  moveCameraZ: 10,
+
+  speed: 1,
+  lorenzMultiplier: 1,
+  arneodoMultiplier: 0,
+  burkeShawMultiplier: 0,
+  chenLeeMultiplier: 0,
+  aizawaMultiplier: 0,
+  thomasMultiplier: 0,
+  lorenzMod2Multiplier: 0,
+  hadleyMultiplier: 0,
+  halvorsenMultiplier: 0,
+  threeScrollMultiplier: 0,
+  coulletMultiplier: 0,
+  dadrasMultiplier: 0,
+}
+
 // camera state
-let rotateCameraX = degreesToRadians(0);
-let rotateCameraY = degreesToRadians(0);
-let rotateCameraZ = degreesToRadians(0);
+let rotateCameraX = INITIAL_VALUES.rotateCameraX;
+let rotateCameraY = INITIAL_VALUES.rotateCameraY;
+let rotateCameraZ = INITIAL_VALUES.rotateCameraZ;
 
 let moveCameraX = 0;
 let moveCameraY = 0;
-let moveCameraZ = 10;
+let moveCameraZ = INITIAL_VALUES.moveCameraZ;
 
 let scaleX = 1;
 let scaleY = 1;
@@ -75,24 +97,234 @@ let prevDragY: number;
 let mouseDown = false;
 
 // particle speed / interpolation state
-let speed = 1;
-let lorenzMultiplier = 1;
-let arneodoMultiplier = 0;
-let burkeShawMultiplier = 0;
-let chenLeeMultiplier = 0;
-let aizawaMultiplier = 0;
-let thomasMultiplier = 0;
-let lorenzMod2Multiplier = 0;
-let hadleyMultiplier = 0;
-let halvorsenMultiplier = 0;
-let threeScrollMultiplier = 0;
-let coulletMultiplier = 0;
-let dadrasMultiplier = 0;
+let speed = INITIAL_VALUES.speed;
+let lorenzMultiplier = INITIAL_VALUES.lorenzMultiplier;
+let arneodoMultiplier = INITIAL_VALUES.arneodoMultiplier;
+let burkeShawMultiplier = INITIAL_VALUES.burkeShawMultiplier;
+let chenLeeMultiplier = INITIAL_VALUES.chenLeeMultiplier;
+let aizawaMultiplier = INITIAL_VALUES.aizawaMultiplier;
+let thomasMultiplier = INITIAL_VALUES.thomasMultiplier;
+let lorenzMod2Multiplier = INITIAL_VALUES.lorenzMod2Multiplier;
+let hadleyMultiplier = INITIAL_VALUES.hadleyMultiplier;
+let halvorsenMultiplier = INITIAL_VALUES.halvorsenMultiplier;
+let threeScrollMultiplier = INITIAL_VALUES.threeScrollMultiplier;
+let coulletMultiplier = INITIAL_VALUES.coulletMultiplier;
+let dadrasMultiplier = INITIAL_VALUES.dadrasMultiplier;
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
-const resetButton = document.querySelector('button') as HTMLButtonElement;
+const resetParticlesButton = document.querySelector('#reset-particles') as HTMLButtonElement;
+const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
 const loadingIndicator = document.querySelector('#loading') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
+const speedInput = createInput({
+  label: 'Speed',
+  type: 'range',
+  min: 0,
+  max: 10,
+  step: 0.0001,
+  className: 'margin-bottom',
+  initialValue: speed,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    speed = value;
+  },
+})
+
+const ATTRACTOR_DEFAULTS = {
+  type: 'range',
+  min: 0,
+  max: 10,
+  step: 0.001,
+}
+const lorenzInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Lorenz',
+  initialValue: lorenzMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    lorenzMultiplier = value;
+  },
+});
+const arneodoInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Arneodo',
+  initialValue: arneodoMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    arneodoMultiplier = value;
+  },
+});
+const burkeShawInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Burke-Shaw',
+  initialValue: burkeShawMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    burkeShawMultiplier = value;
+  },
+});
+const chenLeeInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Chen-Lee',
+  initialValue: chenLeeMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    chenLeeMultiplier = value;
+  },
+});
+const aizawaInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Aizawa',
+  initialValue: aizawaMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    aizawaMultiplier = value;
+  },
+});
+const thomasInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Thomas',
+  initialValue: thomasMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    thomasMultiplier = value;
+  },
+});
+const lorenzMod2Input = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Lorenz',
+  initialValue: lorenzMod2Multiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    lorenzMod2Multiplier = value;
+  },
+});
+const hadleyInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Hadley',
+  initialValue: hadleyMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    hadleyMultiplier = value;
+  },
+});
+const halvorsenInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Halvorsen',
+  initialValue: halvorsenMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    halvorsenMultiplier = value;
+  },
+});
+const threeScrollInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Three-Scroll Unified Chaotic System',
+  initialValue: threeScrollMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    threeScrollMultiplier = value;
+  },
+});
+const coulletInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Coullet',
+  initialValue: coulletMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    coulletMultiplier = value;
+  },
+});
+const dadrasInput = createInput({
+  ...ATTRACTOR_DEFAULTS,
+  label: 'Dadras',
+  initialValue: dadrasMultiplier,
+  oninput: (e, currentValueIndicator) => {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    currentValueIndicator.textContent = value.toString();
+    dadrasMultiplier = value;
+  },
+});
+
+inputContainer.append(
+  speedInput,
+  lorenzInput,
+  arneodoInput,
+  burkeShawInput,
+  chenLeeInput,
+  aizawaInput,
+  thomasInput,
+  lorenzMod2Input,
+  hadleyInput,
+  halvorsenInput,
+  threeScrollInput,
+  coulletInput,
+  dadrasInput
+)
+
+const resetStateValues = () => {
+  rotateCameraX = INITIAL_VALUES.rotateCameraX;
+  rotateCameraY = INITIAL_VALUES.rotateCameraY;
+  rotateCameraZ = INITIAL_VALUES.rotateCameraZ;
+  moveCameraZ = INITIAL_VALUES.moveCameraZ;
+  speed = INITIAL_VALUES.speed;
+  lorenzMultiplier = INITIAL_VALUES.lorenzMultiplier;
+  arneodoMultiplier = INITIAL_VALUES.arneodoMultiplier;
+  burkeShawMultiplier = INITIAL_VALUES.burkeShawMultiplier;
+  chenLeeMultiplier = INITIAL_VALUES.chenLeeMultiplier;
+  aizawaMultiplier = INITIAL_VALUES.aizawaMultiplier;
+  thomasMultiplier = INITIAL_VALUES.thomasMultiplier;
+  lorenzMod2Multiplier = INITIAL_VALUES.lorenzMod2Multiplier;
+  hadleyMultiplier = INITIAL_VALUES.hadleyMultiplier;
+  halvorsenMultiplier = INITIAL_VALUES.halvorsenMultiplier;
+  threeScrollMultiplier = INITIAL_VALUES.threeScrollMultiplier;
+  coulletMultiplier = INITIAL_VALUES.coulletMultiplier;
+  dadrasMultiplier = INITIAL_VALUES.dadrasMultiplier;
+}
+
+const resetGui = () => {
+ // update input values
+ speedInput.querySelector('input')!.value = INITIAL_VALUES.speed.toString();
+ lorenzInput.querySelector('input')!.value = INITIAL_VALUES.lorenzMultiplier.toString();
+ arneodoInput.querySelector('input')!.value = INITIAL_VALUES.arneodoMultiplier.toString();
+ burkeShawInput.querySelector('input')!.value = INITIAL_VALUES.burkeShawMultiplier.toString();
+ chenLeeInput.querySelector('input')!.value = INITIAL_VALUES.chenLeeMultiplier.toString();
+ aizawaInput.querySelector('input')!.value = INITIAL_VALUES.aizawaMultiplier.toString();
+ thomasInput.querySelector('input')!.value = INITIAL_VALUES.thomasMultiplier.toString();
+ lorenzMod2Input.querySelector('input')!.value = INITIAL_VALUES.lorenzMod2Multiplier.toString();
+ hadleyInput.querySelector('input')!.value = INITIAL_VALUES.hadleyMultiplier.toString();
+ halvorsenInput.querySelector('input')!.value = INITIAL_VALUES.halvorsenMultiplier.toString();
+ threeScrollInput.querySelector('input')!.value = INITIAL_VALUES.threeScrollMultiplier.toString();
+ coulletInput.querySelector('input')!.value = INITIAL_VALUES.coulletMultiplier.toString();
+ dadrasInput.querySelector('input')!.value = INITIAL_VALUES.dadrasMultiplier.toString();
+
+ // update input label values
+ speedInput.querySelector('p')!.textContent = INITIAL_VALUES.speed.toString();
+ lorenzInput.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMultiplier.toString();
+ arneodoInput.querySelector('p')!.textContent = INITIAL_VALUES.arneodoMultiplier.toString();
+ burkeShawInput.querySelector('p')!.textContent = INITIAL_VALUES.burkeShawMultiplier.toString();
+ chenLeeInput.querySelector('p')!.textContent = INITIAL_VALUES.chenLeeMultiplier.toString();
+ aizawaInput.querySelector('p')!.textContent = INITIAL_VALUES.aizawaMultiplier.toString();
+ thomasInput.querySelector('p')!.textContent = INITIAL_VALUES.thomasMultiplier.toString();
+ lorenzMod2Input.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMod2Multiplier.toString();
+ hadleyInput.querySelector('p')!.textContent = INITIAL_VALUES.hadleyMultiplier.toString();
+ halvorsenInput.querySelector('p')!.textContent = INITIAL_VALUES.halvorsenMultiplier.toString();
+ threeScrollInput.querySelector('p')!.textContent = INITIAL_VALUES.threeScrollMultiplier.toString();
+ coulletInput.querySelector('p')!.textContent = INITIAL_VALUES.coulletMultiplier.toString();
+ dadrasInput.querySelector('p')!.textContent = INITIAL_VALUES.dadrasMultiplier.toString();
+}
 
 const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
   const vbo = gl.createBuffer();
@@ -110,7 +342,9 @@ const swapParticleVbos = function () {
 }
 
 const main = async () => {
-  initUI();
+  resetStateValues();
+  resetGui();
+  addEventListeners();
   gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
   if (!gl) throw err('WebGL not supported', { gl });
 
@@ -262,8 +496,15 @@ const render = () => {
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
 }
 
-const reset = () => {
+const resetParticles = () => {
+  // reset particles (re-upload original vertex data)
   positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
+}
+
+const resetEverything = () => {
+  resetParticles();
+  resetStateValues();
+  resetGui();
 }
 
 const animate = () => {
@@ -271,6 +512,7 @@ const animate = () => {
   requestAnimationFrame(animate);
 }
 
+/** Prevents exceeding x-rotation boundaries */
 const addToRotateCameraX = (amt: number) => {
   if (amt < 0) {
     rotateCameraX = Math.max(rotateCameraX + amt, ROTATE_CAMERA_X_MIN_RADIANS)
@@ -280,7 +522,7 @@ const addToRotateCameraX = (amt: number) => {
 }
 
 /** Create UI and attach event listeners to update global variables */
-const initUI = () => {
+const addEventListeners = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
   canvas.addEventListener('resize', updateProjectionMatrix);
 
@@ -369,165 +611,8 @@ const initUI = () => {
     updateProjectionMatrix();
   });
 
-  resetButton.onclick = reset;
-
-  const speedInput = createInput({
-    label: 'Speed',
-    type: 'range',
-    min: 0,
-    max: 10,
-    step: 0.0001,
-    className: 'margin-bottom',
-    initialValue: speed,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      speed = value;
-    },
-  })
-  
-  const ATTRACTOR_DEFAULTS = {
-    type: 'range',
-    min: 0,
-    max: 10,
-    step: 0.001,
-  }
-  const lorenzInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Lorenz',
-    initialValue: lorenzMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      lorenzMultiplier = value;
-    },
-  });
-  const arneodoInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Arneodo',
-    initialValue: arneodoMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      arneodoMultiplier = value;
-    },
-  });
-  const burkeShawInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Burke-Shaw',
-    initialValue: burkeShawMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      burkeShawMultiplier = value;
-    },
-  });
-  const chenLeeInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Chen-Lee',
-    initialValue: chenLeeMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      chenLeeMultiplier = value;
-    },
-  });
-  const aizawaInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Aizawa',
-    initialValue: aizawaMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      aizawaMultiplier = value;
-    },
-  });
-  const thomasInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Thomas',
-    initialValue: thomasMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      thomasMultiplier = value;
-    },
-  });
-  const lorenzMod2Input = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Lorenz',
-    initialValue: lorenzMod2Multiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      lorenzMod2Multiplier = value;
-    },
-  });
-  const hadleyInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Hadley',
-    initialValue: hadleyMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      hadleyMultiplier = value;
-    },
-  });
-  const halvorsenInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Halvorsen',
-    initialValue: halvorsenMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      halvorsenMultiplier = value;
-    },
-  });
-  const threeScrollInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Three-Scroll Unified Chaotic System',
-    initialValue: threeScrollMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      threeScrollMultiplier = value;
-    },
-  });
-  const coulletInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Coullet',
-    initialValue: coulletMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      coulletMultiplier = value;
-    },
-  });
-  const dadrasInput = createInput({
-    ...ATTRACTOR_DEFAULTS,
-    label: 'Dadras',
-    initialValue: dadrasMultiplier,
-    oninput: (e, currentValueIndicator) => {
-      const value = (e.target as HTMLInputElement).valueAsNumber;
-      currentValueIndicator.textContent = value.toString();
-      dadrasMultiplier = value;
-    },
-  });
-  
-  inputContainer.append(
-    speedInput,
-    lorenzInput,
-    arneodoInput,
-    burkeShawInput,
-    chenLeeInput,
-    aizawaInput,
-    thomasInput,
-    lorenzMod2Input,
-    hadleyInput,
-    halvorsenInput,
-    threeScrollInput,
-    coulletInput,
-    dadrasInput
-  )
+  resetParticlesButton.onclick = resetParticles;
+  resetEverythingButton.onclick = resetEverything;
 }
 
 

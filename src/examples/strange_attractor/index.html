@@ -29,9 +29,9 @@
       width: 200px;
       max-height: calc(100vh - 4rem);
       overflow-y: scroll;
-      top: 0;
-      left: 0;
-      background-color: #000a;
+      top: 1rem;
+      left: 1rem;
+      background-color: #fff3;
       padding: 1rem;
       border-radius: 5px;
     }
@@ -54,7 +54,7 @@
 
     .margin-bottom {
       display: block;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
     }
 
     #loading {
@@ -79,9 +79,8 @@
   <p id="loading">Loading...</p>
   <canvas></canvas>
   <div class="input-container">
-    <button type="button" id="#reset" class="margin-bottom">
-      Reset Particles
-    </button>
+    <button type="button" id="reset-particles" class="margin-bottom">Reset Particles</button>
+    <button type="button" id="reset-everything" class="margin-bottom">Reset Everything</button>
   </div>
 </body>
 

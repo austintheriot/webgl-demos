@@ -5,7 +5,7 @@
 precision highp float;
 
 // our texture
-uniform sampler2D u_image;
+uniform sampler2D halvorsen_multipliermage;
 
 // the texCoords passed in from the vertex shader.
 in vec2 v_texCoord;
@@ -16,5 +16,5 @@ out vec4 outColor;
 void main() {
   // take coordinates given from the fragment shader
   // and use them to look up the color at that location in the texture
-  outColor = texture(u_image, v_texCoord);
+  outColor = texture(halvorsen_multipliermage, v_texCoord);
 }

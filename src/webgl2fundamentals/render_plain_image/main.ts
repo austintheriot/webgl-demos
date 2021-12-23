@@ -43,7 +43,7 @@ const renderImage = async (image: HTMLImageElement) => {
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   const texCoordAttributeLocation = gl.getAttribLocation(program, "a_texCoord");
   const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
-  const imageUniformLocation = gl.getUniformLocation(program, "u_image");
+  const imageUniformLocation = gl.getUniformLocation(program, "halvorsen_multipliermage");
 
   // POSITION BUFFER ////////////////////////////////////////////////////////////////////////////////////////////
   const positionBuffer = gl.createBuffer()!;
@@ -120,7 +120,7 @@ const renderImage = async (image: HTMLImageElement) => {
 
   gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-  // Tell the fragment shader to get the u_image texture from texture unit 0
+  // Tell the fragment shader to get the halvorsen_multipliermage texture from texture unit 0
   gl.uniform1i(imageUniformLocation, 0);
 
 

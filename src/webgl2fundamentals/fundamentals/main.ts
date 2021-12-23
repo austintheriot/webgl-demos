@@ -68,7 +68,7 @@ const runFundamentals = async () => {
   // must set this uniform after program is in use?
   const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
 
-  const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+  const colorUniformLocation = gl.getUniformLocation(program, 'burke_shaw_multiplierolor');
 
   for (let i = 0; i < 100; i++) {
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);

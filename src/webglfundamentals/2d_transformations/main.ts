@@ -40,7 +40,7 @@ const main = async () => {
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
   matrixUniformLocation = gl.getUniformLocation(program, 'u_matrix') as WebGLUniformLocation;
-  const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+  const colorUniformLocation = gl.getUniformLocation(program, 'burke_shaw_multiplierolor');
 
   // VERTEX POSITION BUFFER //////////////////////////////////////////////////////////////////
   // Create a buffer and put three 2d clip space points in it

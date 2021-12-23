@@ -15,8 +15,7 @@ const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS *
 const ROTATE_CAMERA_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_CAMERA_X_MAX_RADIANS = degreesToRadians(60);
 
-let speed = 1;
-
+// camera state
 let rotateCameraX = degreesToRadians(0);
 let rotateCameraY = degreesToRadians(0);
 let rotateCameraZ = degreesToRadians(0);
@@ -45,6 +44,7 @@ let cameraAngleRadians = degreesToRadians(60);
 let zNear = 0.1;
 let zFar = 2000;
 
+// wenbgl state
 let gl: WebGL2RenderingContext;
 let updateProgram: WebGLProgram;
 let renderProgram: WebGLProgram;
@@ -53,21 +53,20 @@ let projectionMatrix = matrix4x4.createIdentityMatrix();
 let positionVboRead: WebGLBuffer;
 let positionVboWrite: WebGLBuffer;
 let colorVbo: WebGLBuffer;
-
 let matrixLoc: WebGLUniformLocation;
 let speedLoc: WebGLUniformLocation;
-let uALoc: WebGLUniformLocation;
-let uBLoc: WebGLUniformLocation;
-let uCLoc: WebGLUniformLocation;
-let uDLoc: WebGLUniformLocation;
-let uELoc: WebGLUniformLocation;
-let uFLoc: WebGLUniformLocation;
-let uGLoc: WebGLUniformLocation;
-let uHLoc: WebGLUniformLocation;
-let uILoc: WebGLUniformLocation;
-let uJLoc: WebGLUniformLocation;
-let uKLoc: WebGLUniformLocation;
-let uLoc: WebGLUniformLocation;
+let lorenzLoc: WebGLUniformLocation;
+let arneodoLoc: WebGLUniformLocation;
+let burkeShawLoc: WebGLUniformLocation;
+let chenLeeLoc: WebGLUniformLocation;
+let aizawaLoc: WebGLUniformLocation;
+let thomasLoc: WebGLUniformLocation;
+let lorenzMod2Loc: WebGLUniformLocation;
+let hadleyLoc: WebGLUniformLocation;
+let halvorsenLoc: WebGLUniformLocation;
+let threeScrollLoc: WebGLUniformLocation;
+let coulletLoc: WebGLUniformLocation;
+let dadrasLoc: WebGLUniformLocation;
 
 let prevTouchX: number;
 let prevTouchY: number;
@@ -75,7 +74,8 @@ let prevDragX: number;
 let prevDragY: number;
 let mouseDown = false;
 
-// default interpolation values for the attractors
+// particle speed / interpolation state
+let speed = 1;
 let lorenzMultiplier = 1;
 let arneodoMultiplier = 0;
 let burkeShawMultiplier = 0;
@@ -152,22 +152,19 @@ const main = async () => {
     loadingIndicator.textContent = `Error occurred: ${e}`;
   }
 
-
-
-  // look up where the vertex data needs to go
   speedLoc = gl.getUniformLocation(updateProgram, 'u_speed') as WebGLUniformLocation;
-  uALoc = gl.getUniformLocation(updateProgram, 'u_a') as WebGLUniformLocation;
-  uBLoc = gl.getUniformLocation(updateProgram, 'u_b') as WebGLUniformLocation;
-  uCLoc = gl.getUniformLocation(updateProgram, 'u_c') as WebGLUniformLocation;
-  uDLoc = gl.getUniformLocation(updateProgram, 'u_d') as WebGLUniformLocation;
-  uELoc = gl.getUniformLocation(updateProgram, 'u_e') as WebGLUniformLocation;
-  uFLoc = gl.getUniformLocation(updateProgram, 'u_f') as WebGLUniformLocation;
-  uGLoc = gl.getUniformLocation(updateProgram, 'u_g') as WebGLUniformLocation;
-  uHLoc = gl.getUniformLocation(updateProgram, 'u_h') as WebGLUniformLocation;
-  uILoc = gl.getUniformLocation(updateProgram, 'u_i') as WebGLUniformLocation;
-  uJLoc = gl.getUniformLocation(updateProgram, 'u_j') as WebGLUniformLocation;
-  uJLoc = gl.getUniformLocation(updateProgram, 'u_k') as WebGLUniformLocation;
-  uKLoc = gl.getUniformLocation(updateProgram, 'u_l') as WebGLUniformLocation;
+  lorenzLoc = gl.getUniformLocation(updateProgram, 'lorenz_multiplier') as WebGLUniformLocation;
+  arneodoLoc = gl.getUniformLocation(updateProgram, 'arneodo_multiplier') as WebGLUniformLocation;
+  burkeShawLoc = gl.getUniformLocation(updateProgram, 'burke_shaw_multiplier') as WebGLUniformLocation;
+  chenLeeLoc = gl.getUniformLocation(updateProgram, 'chen_lee_multiplier') as WebGLUniformLocation;
+  aizawaLoc = gl.getUniformLocation(updateProgram, 'aizawa_multiplier') as WebGLUniformLocation;
+  thomasLoc = gl.getUniformLocation(updateProgram, 'thomas_multiplier') as WebGLUniformLocation;
+  lorenzMod2Loc = gl.getUniformLocation(updateProgram, 'lorenz_mod_2_multiplier') as WebGLUniformLocation;
+  hadleyLoc = gl.getUniformLocation(updateProgram, 'hadley_multiplier') as WebGLUniformLocation;
+  halvorsenLoc = gl.getUniformLocation(updateProgram, 'halvorsen_multiplier') as WebGLUniformLocation;
+  threeScrollLoc = gl.getUniformLocation(updateProgram, 'three_scrolls_multiplier') as WebGLUniformLocation;
+  coulletLoc = gl.getUniformLocation(updateProgram, 'coullet_multiplier') as WebGLUniformLocation;
+  dadrasLoc = gl.getUniformLocation(updateProgram, 'dadras_multiplier') as WebGLUniformLocation;
   matrixLoc = gl.getUniformLocation(renderProgram, 'u_matrix') as WebGLUniformLocation;
 
   // initialize buffers
@@ -203,18 +200,18 @@ const render = () => {
 
   // update uniforms / buffers
   gl.uniform1f(speedLoc, speed);
-  gl.uniform1f(uALoc, lorenzMultiplier);
-  gl.uniform1f(uBLoc, arneodoMultiplier);
-  gl.uniform1f(uCLoc, burkeShawMultiplier);
-  gl.uniform1f(uDLoc, chenLeeMultiplier);
-  gl.uniform1f(uELoc, aizawaMultiplier);
-  gl.uniform1f(uFLoc, thomasMultiplier);
-  gl.uniform1f(uGLoc, lorenzMod2Multiplier);
-  gl.uniform1f(uHLoc, hadleyMultiplier);
-  gl.uniform1f(uILoc, halvorsenMultiplier);
-  gl.uniform1f(uJLoc, threeScrollMultiplier);
-  gl.uniform1f(uKLoc, coulletMultiplier);
-  gl.uniform1f(uLoc, dadrasMultiplier);
+  gl.uniform1f(lorenzLoc, lorenzMultiplier);
+  gl.uniform1f(arneodoLoc, arneodoMultiplier);
+  gl.uniform1f(burkeShawLoc, burkeShawMultiplier);
+  gl.uniform1f(chenLeeLoc, chenLeeMultiplier);
+  gl.uniform1f(aizawaLoc, aizawaMultiplier);
+  gl.uniform1f(thomasLoc, thomasMultiplier);
+  gl.uniform1f(lorenzMod2Loc, lorenzMod2Multiplier);
+  gl.uniform1f(hadleyLoc, hadleyMultiplier);
+  gl.uniform1f(halvorsenLoc, halvorsenMultiplier);
+  gl.uniform1f(threeScrollLoc, threeScrollMultiplier);
+  gl.uniform1f(coulletLoc, coulletMultiplier);
+  gl.uniform1f(dadrasLoc, dadrasMultiplier);
   [positionVboRead].forEach((vbo, i) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(i);

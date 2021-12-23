@@ -5,7 +5,7 @@
 precision highp float;
 
 // our texture
-uniform sampler2D u_image;
+uniform sampler2D halvorsen_multipliermage;
 
 // the texCoords passed in from the vertex shader.
 in vec2 v_texCoord;
@@ -16,5 +16,5 @@ out vec4 outColor;
 void main() {
   // get average of colors
   // keep alpha contant
-  outColor = texture(u_image, v_texCoord) + vec4(v_texCoord.xyx / 4.0, 0);
+  outColor = texture(halvorsen_multipliermage, v_texCoord) + vec4(v_texCoord.xyx / 4.0, 0);
 }

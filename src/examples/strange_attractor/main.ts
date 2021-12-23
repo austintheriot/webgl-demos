@@ -1,31 +1,7 @@
 import {
-  createProgram, createTransformFeedbackProgram, createShader, degreesToRadians, err, matrix4x4,
-  radiansToDegrees, resizeCanvasToDisplaySize
+  createProgram, createTransformFeedbackProgram, createShader, degreesToRadians,
+  err, matrix4x4, resizeCanvasToDisplaySize, createInput
 } from "../utils";
-
-const canvas = document.querySelector('canvas') as HTMLCanvasElement;
-const scaleXInput = document.querySelector('#scaleX') as HTMLInputElement;
-const scaleYInput = document.querySelector('#scaleY') as HTMLInputElement;
-const scaleZInput = document.querySelector('#scaleZ') as HTMLInputElement;
-const translateXInput = document.querySelector('#translateX') as HTMLInputElement;
-const translateYInput = document.querySelector('#translateY') as HTMLInputElement;
-const translateZInput = document.querySelector('#translateZ') as HTMLInputElement;
-const rotateXInput = document.querySelector('#rotateX') as HTMLInputElement;
-const rotateYInput = document.querySelector('#rotateY') as HTMLInputElement;
-const rotateZInput = document.querySelector('#rotateZ') as HTMLInputElement;
-const originXInput = document.querySelector('#originX') as HTMLInputElement;
-const originYInput = document.querySelector('#originY') as HTMLInputElement;
-const originZInput = document.querySelector('#originZ') as HTMLInputElement;
-const zNearInput = document.querySelector('#zNear') as HTMLInputElement;
-const zFarInput = document.querySelector('#zFar') as HTMLInputElement;
-const rotateCameraXInput = document.querySelector('#rotateCameraX') as HTMLInputElement;
-const rotateCameraYInput = document.querySelector('#rotateCameraY') as HTMLInputElement;
-const rotateCameraZInput = document.querySelector('#rotateCameraZ') as HTMLInputElement;
-const moveCameraXInput = document.querySelector('#moveCameraX') as HTMLInputElement;
-const moveCameraYInput = document.querySelector('#moveCameraY') as HTMLInputElement;
-const moveCameraZInput = document.querySelector('#moveCameraZ') as HTMLInputElement;
-const dtInput = document.querySelector('#dt') as HTMLInputElement;
-const resetButton = document.querySelector('button') as HTMLButtonElement;
 
 const NUM_POINTS = 1_000_000;
 // create an arrays of random points
@@ -36,11 +12,10 @@ const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS *
   return Math.random();
 }));
 
-
 const ROTATE_CAMERA_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_CAMERA_X_MAX_RADIANS = degreesToRadians(60);
 
-let dt = 0.001;
+let speed = 1;
 
 let rotateCameraX = degreesToRadians(0);
 let rotateCameraY = degreesToRadians(0);
@@ -73,19 +48,51 @@ let zFar = 2000;
 let gl: WebGL2RenderingContext;
 let updateProgram: WebGLProgram;
 let renderProgram: WebGLProgram;
-let matrixUniformLocation: WebGLUniformLocation;
-let deltaTimeUniformLocation: WebGLUniformLocation;
 let transformFeedback: WebGLTransformFeedback | null;
 let projectionMatrix = matrix4x4.createIdentityMatrix();
 let positionVboRead: WebGLBuffer;
 let positionVboWrite: WebGLBuffer;
 let colorVbo: WebGLBuffer;
 
+let matrixLoc: WebGLUniformLocation;
+let speedLoc: WebGLUniformLocation;
+let uALoc: WebGLUniformLocation;
+let uBLoc: WebGLUniformLocation;
+let uCLoc: WebGLUniformLocation;
+let uDLoc: WebGLUniformLocation;
+let uELoc: WebGLUniformLocation;
+let uFLoc: WebGLUniformLocation;
+let uGLoc: WebGLUniformLocation;
+let uHLoc: WebGLUniformLocation;
+let uILoc: WebGLUniformLocation;
+let uJLoc: WebGLUniformLocation;
+let uKLoc: WebGLUniformLocation;
+let uLoc: WebGLUniformLocation;
+
 let prevTouchX: number;
 let prevTouchY: number;
 let prevDragX: number;
 let prevDragY: number;
 let mouseDown = false;
+
+// default interpolation values for the attractors
+let lorenzMultiplier = 1;
+let arneodoMultiplier = 0;
+let burkeShawMultiplier = 0;
+let chenLeeMultiplier = 0;
+let aizawaMultiplier = 0;
+let thomasMultiplier = 0;
+let lorenzMod2Multiplier = 0;
+let hadleyMultiplier = 0;
+let halvorsenMultiplier = 0;
+let threeScrollMultiplier = 0;
+let coulletMultiplier = 0;
+let dadrasMultiplier = 0;
+
+const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+const resetButton = document.querySelector('button') as HTMLButtonElement;
+const loadingIndicator = document.querySelector('#loading') as HTMLParagraphElement;
+const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
 
 const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
   const vbo = gl.createBuffer();
@@ -130,19 +137,38 @@ const main = async () => {
     drawFragment.text()
   ]));
 
-  // create shaders from source code & link to program
-  const updateVertexShader = createShader(gl, gl.VERTEX_SHADER, updateVertexShaderSource);
-  const updateFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, updateFragmentShaderSource);
-  updateProgram = createTransformFeedbackProgram(gl, updateVertexShader, updateFragmentShader, ['o_position']);
-  transformFeedback = gl.createTransformFeedback();
+  try {
+    // create shaders from source code & link to program
+    const updateVertexShader = createShader(gl, gl.VERTEX_SHADER, updateVertexShaderSource);
+    const updateFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, updateFragmentShaderSource);
+    updateProgram = createTransformFeedbackProgram(gl, updateVertexShader, updateFragmentShader, ['o_position']);
+    transformFeedback = gl.createTransformFeedback();
 
-  const drawVertexShader = createShader(gl, gl.VERTEX_SHADER, drawVertexShaderSource);
-  const drawFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, drawFragmentShaderSource);
-  renderProgram = createProgram(gl, drawVertexShader, drawFragmentShader);
+    const drawVertexShader = createShader(gl, gl.VERTEX_SHADER, drawVertexShaderSource);
+    const drawFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, drawFragmentShaderSource);
+    renderProgram = createProgram(gl, drawVertexShader, drawFragmentShader);
+  } catch (e) {
+    console.error(e);
+    loadingIndicator.textContent = `Error occurred: ${e}`;
+  }
+
+
 
   // look up where the vertex data needs to go
-  deltaTimeUniformLocation = gl.getUniformLocation(updateProgram, 'u_dt') as WebGLUniformLocation;
-  matrixUniformLocation = gl.getUniformLocation(renderProgram, 'u_matrix') as WebGLUniformLocation;
+  speedLoc = gl.getUniformLocation(updateProgram, 'u_speed') as WebGLUniformLocation;
+  uALoc = gl.getUniformLocation(updateProgram, 'u_a') as WebGLUniformLocation;
+  uBLoc = gl.getUniformLocation(updateProgram, 'u_b') as WebGLUniformLocation;
+  uCLoc = gl.getUniformLocation(updateProgram, 'u_c') as WebGLUniformLocation;
+  uDLoc = gl.getUniformLocation(updateProgram, 'u_d') as WebGLUniformLocation;
+  uELoc = gl.getUniformLocation(updateProgram, 'u_e') as WebGLUniformLocation;
+  uFLoc = gl.getUniformLocation(updateProgram, 'u_f') as WebGLUniformLocation;
+  uGLoc = gl.getUniformLocation(updateProgram, 'u_g') as WebGLUniformLocation;
+  uHLoc = gl.getUniformLocation(updateProgram, 'u_h') as WebGLUniformLocation;
+  uILoc = gl.getUniformLocation(updateProgram, 'u_i') as WebGLUniformLocation;
+  uJLoc = gl.getUniformLocation(updateProgram, 'u_j') as WebGLUniformLocation;
+  uJLoc = gl.getUniformLocation(updateProgram, 'u_k') as WebGLUniformLocation;
+  uKLoc = gl.getUniformLocation(updateProgram, 'u_l') as WebGLUniformLocation;
+  matrixLoc = gl.getUniformLocation(renderProgram, 'u_matrix') as WebGLUniformLocation;
 
   // initialize buffers
   positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
@@ -151,6 +177,9 @@ const main = async () => {
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   updateProjectionMatrix();
+
+  // END LOADING ////////////////////////////////////////////////////////////////
+  loadingIndicator.remove();
 
   // RENDER //////////////////////////////////////////////////////////////////
   animate();
@@ -173,7 +202,19 @@ const render = () => {
   gl.useProgram(updateProgram);
 
   // update uniforms / buffers
-  gl.uniform1f(deltaTimeUniformLocation, dt);
+  gl.uniform1f(speedLoc, speed);
+  gl.uniform1f(uALoc, lorenzMultiplier);
+  gl.uniform1f(uBLoc, arneodoMultiplier);
+  gl.uniform1f(uCLoc, burkeShawMultiplier);
+  gl.uniform1f(uDLoc, chenLeeMultiplier);
+  gl.uniform1f(uELoc, aizawaMultiplier);
+  gl.uniform1f(uFLoc, thomasMultiplier);
+  gl.uniform1f(uGLoc, lorenzMod2Multiplier);
+  gl.uniform1f(uHLoc, hadleyMultiplier);
+  gl.uniform1f(uILoc, halvorsenMultiplier);
+  gl.uniform1f(uJLoc, threeScrollMultiplier);
+  gl.uniform1f(uKLoc, coulletMultiplier);
+  gl.uniform1f(uLoc, dadrasMultiplier);
   [positionVboRead].forEach((vbo, i) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(i);
@@ -219,7 +260,7 @@ const render = () => {
   cameraMatrix = matrix4x4.translate(cameraMatrix, moveCameraX, moveCameraY, moveCameraZ);
   const viewMatrix = matrix4x4.inverse(cameraMatrix);
   const viewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
-  gl.uniformMatrix4fv(matrixUniformLocation, false, viewProjectionMatrix);
+  gl.uniformMatrix4fv(matrixLoc, false, viewProjectionMatrix);
 
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
 }
@@ -252,22 +293,18 @@ const initUI = () => {
     switch (e.key) {
       case 'w':
         addToRotateCameraX(-0.1);
-        rotateCameraXInput.value = radiansToDegrees(rotateCameraX).toString();
         updated = true;
         break;
       case 'a':
         rotateCameraY += 0.1;
-        rotateCameraYInput.value = radiansToDegrees(rotateCameraY).toString();
         updated = true;
         break;
       case 's':
         addToRotateCameraX(0.1);
-        rotateCameraXInput.value = radiansToDegrees(rotateCameraX).toString();
         updated = true;
         break;
       case 'd':
         rotateCameraY -= 0.1;
-        rotateCameraYInput.value = radiansToDegrees(rotateCameraY).toString();
         updated = true;
         break;
       default:
@@ -326,143 +363,174 @@ const initUI = () => {
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    const INCREMENT = 0.05;
+    const INCREMENT = 0.01;
     if (e.deltaY < 0) {
       moveCameraZ *= 1 + INCREMENT;
     } else {
       moveCameraZ *= 1 - INCREMENT;
     }
     updateProjectionMatrix();
-  })
+  });
 
   resetButton.onclick = reset;
 
-  scaleXInput.value = scaleX.toString();
-  scaleXInput.addEventListener('input', (e: Event) => {
-    scaleX = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const speedInput = createInput({
+    label: 'Speed',
+    type: 'range',
+    min: 0,
+    max: 10,
+    step: 0.0001,
+    className: 'margin-bottom',
+    initialValue: speed,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      speed = value;
+    },
+  })
+  
+  const ATTRACTOR_DEFAULTS = {
+    type: 'range',
+    min: 0,
+    max: 10,
+    step: 0.001,
+  }
+  const lorenzInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Lorenz',
+    initialValue: lorenzMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      lorenzMultiplier = value;
+    },
   });
-
-  scaleYInput.value = scaleY.toString();
-  scaleYInput.addEventListener('input', (e: Event) => {
-    scaleY = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const arneodoInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Arneodo',
+    initialValue: arneodoMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      arneodoMultiplier = value;
+    },
   });
-
-  scaleZInput.value = scaleZ.toString();
-  scaleZInput.addEventListener('input', (e: Event) => {
-    scaleZ = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const burkeShawInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Burke-Shaw',
+    initialValue: burkeShawMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      burkeShawMultiplier = value;
+    },
   });
-
-  translateXInput.value = translateX.toString();
-  translateXInput.addEventListener('input', (e: Event) => {
-    translateX = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const chenLeeInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Chen-Lee',
+    initialValue: chenLeeMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      chenLeeMultiplier = value;
+    },
   });
-
-  translateYInput.value = translateY.toString();
-  translateYInput.addEventListener('input', (e: Event) => {
-    translateY = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const aizawaInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Aizawa',
+    initialValue: aizawaMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      aizawaMultiplier = value;
+    },
   });
-
-  translateZInput.value = translateZ.toString();
-  translateZInput.addEventListener('input', (e: Event) => {
-    translateZ = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const thomasInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Thomas',
+    initialValue: thomasMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      thomasMultiplier = value;
+    },
   });
-
-  rotateXInput.value = radiansToDegrees(rotateX).toString();
-  rotateXInput.addEventListener('input', (e: Event) => {
-    rotateX = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
+  const lorenzMod2Input = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Lorenz',
+    initialValue: lorenzMod2Multiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      lorenzMod2Multiplier = value;
+    },
   });
-
-  rotateYInput.value = radiansToDegrees(rotateY).toString();
-  rotateYInput.addEventListener('input', (e: Event) => {
-    rotateY = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
+  const hadleyInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Hadley',
+    initialValue: hadleyMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      hadleyMultiplier = value;
+    },
   });
-
-  rotateZInput.value = radiansToDegrees(rotateZ).toString();
-  rotateZInput.addEventListener('input', (e: Event) => {
-    rotateZ = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
+  const halvorsenInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Halvorsen',
+    initialValue: halvorsenMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      halvorsenMultiplier = value;
+    },
   });
-
-  originXInput.value = originX.toString();
-  originXInput.addEventListener('input', (e: Event) => {
-    originX = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const threeScrollInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Three-Scroll Unified Chaotic System',
+    initialValue: threeScrollMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      threeScrollMultiplier = value;
+    },
   });
-
-  originYInput.value = originY.toString();
-  originYInput.addEventListener('input', (e: Event) => {
-    originY = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const coulletInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Coullet',
+    initialValue: coulletMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      coulletMultiplier = value;
+    },
   });
-
-  originZInput.value = originZ.toString();
-  originZInput.addEventListener('input', (e: Event) => {
-    originZ = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
+  const dadrasInput = createInput({
+    ...ATTRACTOR_DEFAULTS,
+    label: 'Dadras',
+    initialValue: dadrasMultiplier,
+    oninput: (e, currentValueIndicator) => {
+      const value = (e.target as HTMLInputElement).valueAsNumber;
+      currentValueIndicator.textContent = value.toString();
+      dadrasMultiplier = value;
+    },
   });
-
-  zNearInput.value = zNear.toString();
-  zNearInput.addEventListener('input', (e: Event) => {
-    zNear = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
-  });
-
-  zFarInput.value = zFar.toString();
-  zFarInput.addEventListener('input', (e: Event) => {
-    zFar = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
-  });
-
-  rotateCameraXInput.value = radiansToDegrees(rotateCameraX).toString();
-  rotateCameraXInput.addEventListener('input', (e: Event) => {
-    rotateCameraX = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
-  });
-
-  rotateCameraYInput.value = radiansToDegrees(rotateCameraY).toString();
-  rotateCameraYInput.min = radiansToDegrees(ROTATE_CAMERA_X_MIN_RADIANS).toString();
-  rotateCameraYInput.max = radiansToDegrees(ROTATE_CAMERA_X_MAX_RADIANS).toString();
-  rotateCameraYInput.addEventListener('input', (e: Event) => {
-    rotateCameraY = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
-  });
-
-  rotateCameraZInput.value = radiansToDegrees(rotateCameraZ).toString();
-  rotateCameraZInput.addEventListener('input', (e: Event) => {
-    rotateCameraZ = degreesToRadians((e.target as HTMLInputElement).valueAsNumber);
-    updateProjectionMatrix();
-  });
-
-  moveCameraXInput.value = moveCameraX.toString();
-  moveCameraXInput.addEventListener('input', (e: Event) => {
-    moveCameraX = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
-  });
-
-  moveCameraYInput.value = moveCameraY.toString();
-  moveCameraYInput.addEventListener('input', (e: Event) => {
-    moveCameraY = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
-  });
-
-  moveCameraZInput.value = moveCameraZ.toString();
-  moveCameraZInput.addEventListener('input', (e: Event) => {
-    moveCameraZ = (e.target as HTMLInputElement).valueAsNumber;
-    updateProjectionMatrix();
-  });
-
-  dtInput.value = dt.toString();
-  dtInput.addEventListener('input', (e: Event) => {
-    dt = (e.target as HTMLInputElement).valueAsNumber;
-  });
+  
+  inputContainer.append(
+    speedInput,
+    lorenzInput,
+    arneodoInput,
+    burkeShawInput,
+    chenLeeInput,
+    aizawaInput,
+    thomasInput,
+    lorenzMod2Input,
+    hadleyInput,
+    halvorsenInput,
+    threeScrollInput,
+    coulletInput,
+    dadrasInput
+  )
 }
 
 

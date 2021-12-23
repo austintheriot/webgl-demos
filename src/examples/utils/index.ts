@@ -466,3 +466,35 @@ export const matrix4x4 = {
     ];
   },
 }
+
+export const createInput = ({
+  min, max, id, className, type, step, initialValue, oninput, label,
+}: {
+  id?: string,
+  min?: number,
+  max?: number,
+  className?: string,
+  type?: string,
+  step?: number,
+  initialValue?: number,
+    oninput?: (e: Event, currentValueIndicator: HTMLParagraphElement) => void,
+  label: string,
+}) => {
+  const inputEl = document.createElement('input');
+  const labelEl = document.createElement('label');
+  const currentValEl = document.createElement('p');
+  if (min !== undefined)  inputEl.min = min.toString();
+  if (max !== undefined)  inputEl.max = max.toString();
+  if (className !== undefined)  inputEl.className = className.toString();
+  if (type !== undefined)  inputEl.type = type.toString();
+  if (step !== undefined)  inputEl.step = step.toString();
+  if (initialValue !== undefined) {
+    const initialValueAsString = initialValue.toString();
+    inputEl.value = initialValueAsString;
+    currentValEl.textContent = initialValueAsString;
+  }
+  if (id !== undefined)  inputEl.id = id.toString();
+  if (oninput !== undefined) inputEl.oninput = (e) => oninput(e, currentValEl);
+  labelEl.append(label, currentValEl, inputEl);
+  return labelEl;
+}

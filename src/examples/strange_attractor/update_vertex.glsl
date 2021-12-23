@@ -40,7 +40,7 @@ void main() {
   vec3 temp_delta = vec3(0.);
   vec3 total_delta = vec3(0.);
 
-  // a --- lorenz attractor 
+  // lorenz attractor ///////////////////////////////////////////////////////////////////
   dt = 0.005 * u_speed;
   a = 10.;
   b = 28.;
@@ -51,7 +51,7 @@ void main() {
   temp_delta.z += dt * (x * y - c * z);
   total_delta += temp_delta * lorenz_multiplier;
 
-  // b --- arneodo attractor
+  // arneodo attractor ///////////////////////////////////////////////////////////////////
   dt = 0.015 * u_speed;
   a = -5.5;
   b = 3.5;
@@ -62,7 +62,7 @@ void main() {
   temp_delta.z = dt * (-a * x - b * y - z + c * (x * x * x));
   total_delta += temp_delta * arneodo_multiplier;
 
-  // c --- burke - Shaw attractor
+  // burke-shaw attractor ///////////////////////////////////////////////////////////////////
   dt = 0.003 * u_speed;
   a = 10.;
   b = 4.272;
@@ -72,7 +72,7 @@ void main() {
   temp_delta.z = dt * (a * x * y + b);
   total_delta += temp_delta * burke_shaw_multiplier;
 
-  // d --- chen - lee attractor
+  // chen-lee attractor ///////////////////////////////////////////////////////////////////
   dt = 0.002 * u_speed;
   a = 5.;
   b = -10.;
@@ -83,7 +83,7 @@ void main() {
   temp_delta.z = dt * (c * z + x * (y / 3.));
   total_delta += temp_delta * chen_lee_multiplier;
 
-  // e --- aizawa attractor
+  // aizawa attractor ///////////////////////////////////////////////////////////////////
   dt = 0.01 * u_speed;
   a = 0.95;
   b = 0.7;
@@ -97,7 +97,7 @@ void main() {
   temp_delta.z = dt * (g + a * z - (z * z * z) / 3. - (x * x + y * y) * (1. + f * z) + c * z * (x * x * x));
   total_delta += temp_delta * aizawa_multiplier;
 
-  // f --- thomas attractor
+  // thomas attractor ///////////////////////////////////////////////////////////////////
   dt = 0.05 * u_speed;
   a = 0.19;
 
@@ -106,7 +106,7 @@ void main() {
   temp_delta.z = dt * (-a * z + sin(x));
   total_delta += temp_delta * thomas_multiplier;
 
-  // g --- lorenz mod2 attractor
+  // lorenz mod2 attractor ///////////////////////////////////////////////////////////////////
   dt = 0.005 * u_speed;
   a = 0.9;
   b = 5.;
@@ -118,7 +118,7 @@ void main() {
   temp_delta.z = dt * (-z + x * (b * y + z));
   total_delta += temp_delta * lorenz_mod_2_multiplier;
 
-  // h --- hadley attractor
+  // hadley attractor ///////////////////////////////////////////////////////////////////
   dt = 0.005 * u_speed;
   a = 0.2;
   b = 4.;
@@ -130,7 +130,7 @@ void main() {
   temp_delta.z = dt * (b * x * y + x * z - z);
   total_delta += temp_delta * hadley_multiplier;
 
-  // i --- halvorsen attractor
+  // halvorsen attractor ///////////////////////////////////////////////////////////////////
   dt = 0.005 * u_speed;
   a = 1.4;
 
@@ -139,7 +139,7 @@ void main() {
   temp_delta.z = dt * (-a * z - 4. * x - 4. * y - x * x);
   total_delta += temp_delta * halvorsen_multiplier;
 
-  // j --- Three-Scroll Unified chaotic System attractor
+  // Three-Scroll Unified chaotic System attractor ////////////////////////////////////////
   dt = 0.002 * u_speed;
   a = 40.;
   b = 0.833;
@@ -152,7 +152,7 @@ void main() {
   temp_delta.z = dt * (b * z + x * y - f * (x * x));
   total_delta += temp_delta * three_scrolls_multiplier;
 
-  // k --- coullet attractor
+  // coullet attractor ///////////////////////////////////////////////////////////////////
   dt = 0.04 * u_speed;
   a = 0.8;
   b = -1.1;
@@ -164,7 +164,7 @@ void main() {
   temp_delta.z = dt * (a * x + b * y + c * z + d * (x * x * x));
   total_delta += temp_delta * coullet_multiplier;
 
-  // l --- dadras attractor
+  // dadras attractor ///////////////////////////////////////////////////////////////////
   dt = 0.01 * u_speed;
   a = 3.;
   b = 2.7;
@@ -179,9 +179,6 @@ void main() {
 
   // update position
   vec3 updated_position = i_position + total_delta;
-
-  // wrap position to box
-  // updated_position = mod(updated_position + 1.0, 2.0) - 1.0;
 
   o_position = updated_position;
 }

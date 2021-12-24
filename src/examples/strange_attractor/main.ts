@@ -4,14 +4,6 @@ import {
 } from "../utils";
 
 const NUM_POINTS = 1_000_000;
-// create an arrays of random points
-const initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-  return (2 * Math.random() - 1);
-}));
-const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-  return Math.random();
-}));
-
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
 
@@ -95,7 +87,10 @@ let prevDragX: number;
 let prevDragY: number;
 let mouseDown = false;
 
-// particle speed / interpolation state
+// particle speed state
+// create an arrays of random points
+let initialParticlePositions: Float32Array;
+let initialParticleColors: Float32Array;
 let speed = INITIAL_VALUES.speed;
 let lorenzMultiplier = INITIAL_VALUES.lorenzMultiplier;
 let arneodoMultiplier = INITIAL_VALUES.arneodoMultiplier;
@@ -341,11 +336,12 @@ const swapParticleVbos = function () {
 }
 
 const main = async () => {
+  gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
+  if (!gl) throw err('WebGL not supported', { gl });
+
   resetStateValues();
   resetGui();
   addEventListeners();
-  gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
-  if (!gl) throw err('WebGL not supported', { gl });
 
   // fetch all shader sources
   const [
@@ -369,6 +365,14 @@ const main = async () => {
     drawVertex.text(),
     drawFragment.text()
   ]));
+
+  // create initial particle positions and colors
+  initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+    return (2 * Math.random() - 1);
+  }));
+  initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
+    return Math.random();
+  }));
 
   try {
     // create shaders from source code & link to program
@@ -528,7 +532,6 @@ const addEventListeners = () => {
 
   // move camera position with wasd
   window.addEventListener('keydown', (e) => {
-    console.log(e);
     let updated = false;
     switch (e.key) {
       case 'w':

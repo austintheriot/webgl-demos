@@ -7,7 +7,7 @@ module.exports = defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        strangeAttractors: resolve(__dirname, 'src/examples/strange_attractor/index.html'),
+        strangeAttractors: resolve(__dirname, 'src/demos/strange_attractor/index.html'),
       }
     }
   }

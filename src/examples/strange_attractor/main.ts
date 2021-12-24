@@ -12,15 +12,14 @@ const initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS *
   return Math.random();
 }));
 
-const ROTATE_CAMERA_X_MIN_RADIANS = degreesToRadians(-60);
-const ROTATE_CAMERA_X_MAX_RADIANS = degreesToRadians(60);
+const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
+const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
 
 const INITIAL_VALUES = {
-  rotateCameraX: 0,
-  rotateCameraY: 0,
-  rotateCameraZ: 0,
-
-  moveCameraZ: 10,
+  rotateX: 0,
+  rotateY: 0,
+  rotateZ: 0,
+  translateZ: -100,
 
   speed: 1,
   lorenzMultiplier: 1,
@@ -38,25 +37,25 @@ const INITIAL_VALUES = {
 }
 
 // camera state
-let rotateCameraX = INITIAL_VALUES.rotateCameraX;
-let rotateCameraY = INITIAL_VALUES.rotateCameraY;
-let rotateCameraZ = INITIAL_VALUES.rotateCameraZ;
+let rotateCameraX = 0;
+let rotateCameraY = 0;
+let rotateCameraZ = 0;
 
 let moveCameraX = 0;
 let moveCameraY = 0;
-let moveCameraZ = INITIAL_VALUES.moveCameraZ;
+let moveCameraZ = 10;
 
 let scaleX = 1;
 let scaleY = 1;
 let scaleZ = 1;
 
-let rotateX = degreesToRadians(180);
-let rotateY = degreesToRadians(0);
-let rotateZ = degreesToRadians(0);
+let rotateX = INITIAL_VALUES.rotateX;
+let rotateY = INITIAL_VALUES.rotateY;
+let rotateZ = INITIAL_VALUES.rotateZ;
 
 let translateX = 0;
 let translateY = 0;
-let translateZ = -100;
+let translateZ = INITIAL_VALUES.translateZ;
 
 let originX = 0;
 let originY = 0;
@@ -275,10 +274,10 @@ inputContainer.append(
 )
 
 const resetStateValues = () => {
-  rotateCameraX = INITIAL_VALUES.rotateCameraX;
-  rotateCameraY = INITIAL_VALUES.rotateCameraY;
-  rotateCameraZ = INITIAL_VALUES.rotateCameraZ;
-  moveCameraZ = INITIAL_VALUES.moveCameraZ;
+  rotateX = INITIAL_VALUES.rotateX;
+  rotateY = INITIAL_VALUES.rotateY;
+  rotateZ = INITIAL_VALUES.rotateZ;
+  translateZ = INITIAL_VALUES.translateZ;
   speed = INITIAL_VALUES.speed;
   lorenzMultiplier = INITIAL_VALUES.lorenzMultiplier;
   arneodoMultiplier = INITIAL_VALUES.arneodoMultiplier;
@@ -505,6 +504,7 @@ const resetEverything = () => {
   resetParticles();
   resetStateValues();
   resetGui();
+  updateProjectionMatrix();
 }
 
 const animate = () => {
@@ -513,37 +513,38 @@ const animate = () => {
 }
 
 /** Prevents exceeding x-rotation boundaries */
-const addToRotateCameraX = (amt: number) => {
+const addToRotateX = (amt: number) => {
   if (amt < 0) {
-    rotateCameraX = Math.max(rotateCameraX + amt, ROTATE_CAMERA_X_MIN_RADIANS)
+    rotateX = Math.max(rotateX + amt, ROTATE_X_MIN_RADIANS)
   } else {
-    rotateCameraX = Math.min(rotateCameraX + amt, ROTATE_CAMERA_X_MAX_RADIANS);
+    rotateX = Math.min(rotateX + amt, ROTATE_X_MAX_RADIANS);
   }
 }
 
 /** Create UI and attach event listeners to update global variables */
 const addEventListeners = () => {
   // SET UP UI //////////////////////////////////////////////////////////////////////
-  canvas.addEventListener('resize', updateProjectionMatrix);
+  window.addEventListener('resize', updateProjectionMatrix);
 
   // move camera position with wasd
-  canvas.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', (e) => {
+    console.log(e);
     let updated = false;
     switch (e.key) {
       case 'w':
-        addToRotateCameraX(-0.1);
+        addToRotateX(-0.05);
         updated = true;
         break;
       case 'a':
-        rotateCameraY += 0.1;
+        rotateY += 0.05;
         updated = true;
         break;
       case 's':
-        addToRotateCameraX(0.1);
+        addToRotateX(0.05);
         updated = true;
         break;
       case 'd':
-        rotateCameraY -= 0.1;
+        rotateY -= 0.05;
         updated = true;
         break;
       default:
@@ -570,8 +571,8 @@ const addEventListeners = () => {
     prevTouchY = nextClientY;
     const px = dx / width;
     const py = dy / height;
-    rotateCameraY += px * 5;
-    addToRotateCameraX(-py * 5);
+    rotateY -= px * 5;
+    addToRotateX(-py * 5);
     updateProjectionMatrix();
   }
 
@@ -592,8 +593,8 @@ const addEventListeners = () => {
     prevDragY = nextClientY;
     const px = dx / width;
     const py = dy / height;
-    rotateCameraY += px * 5;
-    addToRotateCameraX(-py * 5);
+    rotateY -= px * 5;
+    addToRotateX(-py * 5);
     updateProjectionMatrix();
   }
 
@@ -604,9 +605,9 @@ const addEventListeners = () => {
     e.preventDefault();
     const INCREMENT = 0.01;
     if (e.deltaY < 0) {
-      moveCameraZ *= 1 + INCREMENT;
+      translateZ *= 1 - INCREMENT;
     } else {
-      moveCameraZ *= 1 - INCREMENT;
+      translateZ *= 1 + INCREMENT;
     }
     updateProjectionMatrix();
   });

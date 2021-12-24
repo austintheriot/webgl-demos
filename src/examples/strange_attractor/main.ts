@@ -2,6 +2,10 @@ import {
   createProgram, createTransformFeedbackProgram, createShader, degreesToRadians,
   err, matrix4x4, resizeCanvasToDisplaySize, createInput
 } from "../utils";
+import drawFragmentShaderSource from './draw_fragment.glsl?raw'
+import drawVertexShaderSource from './draw_vertex.glsl?raw'
+import updateFragmentShaderSource from './update_fragment.glsl?raw'
+import updateVertexShaderSource from './update_vertex.glsl?raw'
 
 const NUM_POINTS = 1_000_000;
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
@@ -341,29 +345,6 @@ const main = async () => {
   resetStateValues();
   resetGui();
   addEventListeners();
-
-  // fetch all shader sources
-  const [
-    updateVertexShaderSource,
-    updateFragmentShaderSource,
-    drawVertexShaderSource,
-    drawFragmentShaderSource
-  ] = await Promise.all([
-    fetch('./update_vertex.glsl'),
-    fetch('./update_fragment.glsl'),
-    fetch('./draw_vertex.glsl'),
-    fetch('./draw_fragment.glsl'),
-  ]).then(([
-    updateVertex,
-    updateFragment,
-    drawVertex,
-    drawFragment
-  ]) => Promise.all([
-    updateVertex.text(),
-    updateFragment.text(),
-    drawVertex.text(),
-    drawFragment.text()
-  ]));
 
   // create initial particle positions
   initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {

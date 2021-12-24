@@ -24,10 +24,10 @@ const main = async () => {
     z?: number,
   }
 
-  const RED: Color = [200, 0, 0, 255];
-  const GREEN: Color = [0, 200, 0, 255];
-  const BLUE: Color = [0, 0, 200, 255];
-  const BLACK: Color = [0, 0, 0, 255];
+  // const RED: Color = [200, 0, 0, 255];
+  // const GREEN: Color = [0, 200, 0, 255];
+  // const BLUE: Color = [0, 0, 200, 255];
+  // const BLACK: Color = [0, 0, 0, 255];
 
   const drawPixel = (x: number, y: number, color: Color) => {
     const index = (Math.floor(y) * WIDTH * BPP) + (Math.floor(x) * BPP);
@@ -102,48 +102,48 @@ const main = async () => {
 
   // draw filled triangle "old-school" way
   // triangle in two halves by only filling in lines horizontally
-  const drawFilledTriangle0 = (t0: Point, t1: Point, t2: Point, color: Color) => {
-    drawTriangle(t0, t1, t2, color);
+  // const drawFilledTriangle0 = (t0: Point, t1: Point, t2: Point, color: Color) => {
+  //   drawTriangle(t0, t1, t2, color);
 
-    // iterate from bottom to 
-    const vertexes = [t0, t1, t2];
-    // sort by y-coordinates: least -> greatest
-    vertexes.sort((a, b) => a.y - b.y);
-    [t0, t1, t2] = vertexes;
+  //   // iterate from bottom to 
+  //   const vertexes = [t0, t1, t2];
+  //   // sort by y-coordinates: least -> greatest
+  //   vertexes.sort((a, b) => a.y - b.y);
+  //   [t0, t1, t2] = vertexes;
 
-    // bottom half of the triangle
-    const totalHeight = t2.y - t0.y;
-    for (let y = t0.y; y <= t1.y; y++) {
-      const bottomHalfHeight = t1.y - t0.y;
-      const pctYCompleteTo1 = (y - t0.y) / bottomHalfHeight;
-      const pctYCompleteTo2 = (y - t0.y) / totalHeight;
+  //   // bottom half of the triangle
+  //   const totalHeight = t2.y - t0.y;
+  //   for (let y = t0.y; y <= t1.y; y++) {
+  //     const bottomHalfHeight = t1.y - t0.y;
+  //     const pctYCompleteTo1 = (y - t0.y) / bottomHalfHeight;
+  //     const pctYCompleteTo2 = (y - t0.y) / totalHeight;
 
-      // when you are n% away from y, you are also guaranteed to be n% away from x
-      let x1 = t0.x + ((t1.x - t0.x) * pctYCompleteTo1);
-      let x2 = t0.x + ((t2.x - t0.x) * pctYCompleteTo2);
+  //     // when you are n% away from y, you are also guaranteed to be n% away from x
+  //     let x1 = t0.x + ((t1.x - t0.x) * pctYCompleteTo1);
+  //     let x2 = t0.x + ((t2.x - t0.x) * pctYCompleteTo2);
 
-      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++) {
-        drawPixel(x, y, color);
-      }
-    }
+  //     [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
+  //     for (let x = x1; x <= x2; x++) {
+  //       drawPixel(x, y, color);
+  //     }
+  //   }
 
-    // top half of the triangle
-    for (let y = t1.y; y <= t2.y; y++) {
-      const topHalfHeight = (t2.y - t1.y);
-      const pctYCompleteFromT1 = (y - t1.y) / topHalfHeight;
-      const pctYCompleteFromT0 = (y - t0.y) / totalHeight;
+  //   // top half of the triangle
+  //   for (let y = t1.y; y <= t2.y; y++) {
+  //     const topHalfHeight = (t2.y - t1.y);
+  //     const pctYCompleteFromT1 = (y - t1.y) / topHalfHeight;
+  //     const pctYCompleteFromT0 = (y - t0.y) / totalHeight;
 
-      // when you are n% away from y, you are also guaranteed to be n% away from x
-      let x1 = t0.x + ((t2.x - t0.x) * pctYCompleteFromT0);
-      let x2 = t1.x + ((t2.x - t1.x) * pctYCompleteFromT1);
+  //     // when you are n% away from y, you are also guaranteed to be n% away from x
+  //     let x1 = t0.x + ((t2.x - t0.x) * pctYCompleteFromT0);
+  //     let x2 = t1.x + ((t2.x - t1.x) * pctYCompleteFromT1);
 
-      [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
-      for (let x = x1; x <= x2; x++) {
-        drawPixel(x, y, color);
-      }
-    }
-  }
+  //     [x1, x2] = x1 < x2 ? [x1, x2] : [x2, x1];
+  //     for (let x = x1; x <= x2; x++) {
+  //       drawPixel(x, y, color);
+  //     }
+  //   }
+  // }
 
   // drawFilledTriangle0({ x: 20, y: 20 }, { x: 50, y: 800 }, { x: 700, y: 500}, GREEN);
   // drawFilledTriangle0({ x: 930, y: 20 }, { x: 500, y: 200 }, { x: 700, y: 500}, BLUE);

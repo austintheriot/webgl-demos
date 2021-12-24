@@ -6,8 +6,7 @@ module.exports = defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        nested: resolve(__dirname, 'src/tinyrenderer/lesson1/index.html'),
-        nested: resolve(__dirname, 'src/tinyrenderer/lesson2/index.html')
+        strangeAttractors: resolve(__dirname, 'src/examples/strange_attractor/index.html'),
       }
     }
   }

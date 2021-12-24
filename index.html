@@ -1,17 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebGL</title>
-  </head>
-  <body>
-    <div id="app">
-      <a href="./src/tinyrenderer/index.html">Tinyrenderer</a>
-      <a href="./src/webglfundamentals/index.html">WebGL Fundamentals</a>
-      <a href="./src/webgl2fundamentals/index.html">WebGL2 Fundamentals</a>
-      <a href="./src/examples/index.html">My Own Examples</a>
-    </div>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Austin Theriot | WebGL Demos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+      font-weight: normal;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p {
+      font-weight: lighter;
+    }
+
+    a,
+    p {
+      font-size: 1.2rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 600px;
+      margin: 3rem auto;
+    }
+
+    .demo-link {
+      display: block;
+      margin: 1rem 0;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>webgl-demos</h1>
+    <h2>About</h2>
+    <p>This website is a space for displaying some of my endeavors into WebGL, WebGL2, and other general
+      computer graphics technologies and concepts.</p>
+    <h2>Interpolating Strange Attractors</h2>
+    <p>The term "strange attractor" is sometimes used in mathematics to describe a chaotic system that seems to be
+      attracted to an ideal behavior. In this project, I was interested in what would happen if I combined multiple
+      chaotic particle systems together by providing sliders to interpolate between the various systems. You can give a
+      "weight" to each system by increasing or decreasing its slider. Check out the live demo and see what interesting
+      patterns you can create. Use WASD keys or drag/touch to rotate. Scroll mousewheel to zoom in and out.
+    </p>
+    <a href="https://austintheriot.github.io/webgl-demos/src/examples/strange_attractor/index.html"
+      class="demo-link">Live Demo</a>
+    <a href="./images/particles.png">
+      <img src="./images/particles.png" />
+    </a>
+  </div>
+</body>
+
 </html>

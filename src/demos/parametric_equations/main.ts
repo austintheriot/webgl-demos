@@ -306,14 +306,7 @@ const render = () => {
   gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
 }
 
-const resetParticles = () => {
-  // reset particles (re-upload original vertex data)
-  indexBuffer = createVbo(gl, indexes, gl.DYNAMIC_COPY);
-  shouldRender = true;
-}
-
 const resetEverything = () => {
-  resetParticles();
   resetStateValues();
   resetGui();
   updateProjectionMatrix();
@@ -424,7 +417,6 @@ const addEventListeners = () => {
     updateProjectionMatrix();
   });
 
-  resetParticlesButton.onclick = resetParticles;
   resetEverythingButton.onclick = resetEverything;
 
   // take screenshot on click

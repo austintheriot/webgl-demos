@@ -2,11 +2,8 @@
 
 precision highp float;
 
-in vec3 v_color;
-
 out vec4 o_color;
  
 void main() {
-  // Just set the output to a constant reddish-purple
-  o_color = vec4(v_color, 0.5);
+  o_color = vec4(1., 0.75, 0.5, 0.1);
 }

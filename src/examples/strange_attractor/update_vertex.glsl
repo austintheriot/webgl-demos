@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec3 i_position;
 
+// saved in transform feedback buffer
 out vec3 o_position;
 
 uniform float u_speed;

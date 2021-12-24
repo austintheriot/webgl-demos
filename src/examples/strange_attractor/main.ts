@@ -13,7 +13,7 @@ const INITIAL_VALUES = {
   rotateZ: 0,
   translateZ: -100,
 
-  speed: 1,
+  speed: 1.5,
   lorenzMultiplier: 1,
   arneodoMultiplier: 0,
   burkeShawMultiplier: 0,
@@ -65,7 +65,6 @@ let transformFeedback: WebGLTransformFeedback | null;
 let projectionMatrix = matrix4x4.createIdentityMatrix();
 let positionVboRead: WebGLBuffer;
 let positionVboWrite: WebGLBuffer;
-let colorVbo: WebGLBuffer;
 let matrixLoc: WebGLUniformLocation;
 let speedLoc: WebGLUniformLocation;
 let lorenzLoc: WebGLUniformLocation;
@@ -90,7 +89,6 @@ let mouseDown = false;
 // particle speed state
 // create an arrays of random points
 let initialParticlePositions: Float32Array;
-let initialParticleColors: Float32Array;
 let speed = INITIAL_VALUES.speed;
 let lorenzMultiplier = INITIAL_VALUES.lorenzMultiplier;
 let arneodoMultiplier = INITIAL_VALUES.arneodoMultiplier;
@@ -366,12 +364,9 @@ const main = async () => {
     drawFragment.text()
   ]));
 
-  // create initial particle positions and colors
+  // create initial particle positions
   initialParticlePositions = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
     return (2 * Math.random() - 1);
-  }));
-  initialParticleColors = new Float32Array(Array.from({ length: NUM_POINTS * 3 }, () => {
-    return Math.random();
   }));
 
   try {
@@ -407,7 +402,6 @@ const main = async () => {
   // initialize buffers
   positionVboRead = createVbo(gl, initialParticlePositions, gl.DYNAMIC_COPY);
   positionVboWrite = createVbo(gl, new Float32Array(NUM_POINTS * 3), gl.DYNAMIC_COPY);
-  colorVbo = createVbo(gl, initialParticleColors);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   updateProjectionMatrix();
@@ -449,6 +443,8 @@ const render = () => {
   gl.uniform1f(threeScrollLoc, threeScrollMultiplier);
   gl.uniform1f(coulletLoc, coulletMultiplier);
   gl.uniform1f(dadrasLoc, dadrasMultiplier);
+  
+  // use forEach for extensibility later
   [positionVboRead].forEach((vbo, i) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(i);
@@ -480,7 +476,8 @@ const render = () => {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  [positionVboRead, colorVbo].forEach((vbo, i) => {
+  // use forEach for extensibility later
+  [positionVboRead].forEach((vbo, i) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.enableVertexAttribArray(i);
     gl.vertexAttribPointer(i, 3, gl.FLOAT, false, 0, 0);

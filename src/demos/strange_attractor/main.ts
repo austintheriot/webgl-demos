@@ -123,7 +123,7 @@ const speedInput = createInput({
   initialValue: speed,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     speed = value;
   },
 })
@@ -140,7 +140,7 @@ const lorenzInput = createInput({
   initialValue: lorenzMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     lorenzMultiplier = value;
   },
 });
@@ -150,7 +150,7 @@ const arneodoInput = createInput({
   initialValue: arneodoMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     arneodoMultiplier = value;
   },
 });
@@ -160,7 +160,7 @@ const burkeShawInput = createInput({
   initialValue: burkeShawMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     burkeShawMultiplier = value;
   },
 });
@@ -170,7 +170,7 @@ const chenLeeInput = createInput({
   initialValue: chenLeeMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     chenLeeMultiplier = value;
   },
 });
@@ -180,7 +180,7 @@ const aizawaInput = createInput({
   initialValue: aizawaMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     aizawaMultiplier = value;
   },
 });
@@ -190,7 +190,7 @@ const thomasInput = createInput({
   initialValue: thomasMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     thomasMultiplier = value;
   },
 });
@@ -200,7 +200,7 @@ const lorenzMod2Input = createInput({
   initialValue: lorenzMod2Multiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     lorenzMod2Multiplier = value;
   },
 });
@@ -210,7 +210,7 @@ const hadleyInput = createInput({
   initialValue: hadleyMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     hadleyMultiplier = value;
   },
 });
@@ -220,7 +220,7 @@ const halvorsenInput = createInput({
   initialValue: halvorsenMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     halvorsenMultiplier = value;
   },
 });
@@ -230,7 +230,7 @@ const threeScrollInput = createInput({
   initialValue: threeScrollMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     threeScrollMultiplier = value;
   },
 });
@@ -240,7 +240,7 @@ const coulletInput = createInput({
   initialValue: coulletMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     coulletMultiplier = value;
   },
 });
@@ -250,7 +250,7 @@ const dadrasInput = createInput({
   initialValue: dadrasMultiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;
-    currentValueIndicator.textContent = value.toString();
+    if (currentValueIndicator) currentValueIndicator.textContent = value.toString();
     dadrasMultiplier = value;
   },
 });

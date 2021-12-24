@@ -196,7 +196,7 @@ const thomasInput = createInput({
 });
 const lorenzMod2Input = createInput({
   ...ATTRACTOR_DEFAULTS,
-  label: 'Lorenz',
+  label: 'Lorenz Mod 2',
   initialValue: lorenzMod2Multiplier,
   oninput: (e, currentValueIndicator) => {
     const value = (e.target as HTMLInputElement).valueAsNumber;

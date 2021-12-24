@@ -5,6 +5,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
     "serve": "vite preview --host 0.0.0.0",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {

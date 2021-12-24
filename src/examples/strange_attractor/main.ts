@@ -106,6 +106,7 @@ let dadrasMultiplier = INITIAL_VALUES.dadrasMultiplier;
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 const resetParticlesButton = document.querySelector('#reset-particles') as HTMLButtonElement;
 const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
+const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
 const loadingIndicator = document.querySelector('#loading') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
 const speedInput = createInput({
@@ -287,35 +288,35 @@ const resetStateValues = () => {
 }
 
 const resetGui = () => {
- // update input values
- speedInput.querySelector('input')!.value = INITIAL_VALUES.speed.toString();
- lorenzInput.querySelector('input')!.value = INITIAL_VALUES.lorenzMultiplier.toString();
- arneodoInput.querySelector('input')!.value = INITIAL_VALUES.arneodoMultiplier.toString();
- burkeShawInput.querySelector('input')!.value = INITIAL_VALUES.burkeShawMultiplier.toString();
- chenLeeInput.querySelector('input')!.value = INITIAL_VALUES.chenLeeMultiplier.toString();
- aizawaInput.querySelector('input')!.value = INITIAL_VALUES.aizawaMultiplier.toString();
- thomasInput.querySelector('input')!.value = INITIAL_VALUES.thomasMultiplier.toString();
- lorenzMod2Input.querySelector('input')!.value = INITIAL_VALUES.lorenzMod2Multiplier.toString();
- hadleyInput.querySelector('input')!.value = INITIAL_VALUES.hadleyMultiplier.toString();
- halvorsenInput.querySelector('input')!.value = INITIAL_VALUES.halvorsenMultiplier.toString();
- threeScrollInput.querySelector('input')!.value = INITIAL_VALUES.threeScrollMultiplier.toString();
- coulletInput.querySelector('input')!.value = INITIAL_VALUES.coulletMultiplier.toString();
- dadrasInput.querySelector('input')!.value = INITIAL_VALUES.dadrasMultiplier.toString();
+  // update input values
+  speedInput.querySelector('input')!.value = INITIAL_VALUES.speed.toString();
+  lorenzInput.querySelector('input')!.value = INITIAL_VALUES.lorenzMultiplier.toString();
+  arneodoInput.querySelector('input')!.value = INITIAL_VALUES.arneodoMultiplier.toString();
+  burkeShawInput.querySelector('input')!.value = INITIAL_VALUES.burkeShawMultiplier.toString();
+  chenLeeInput.querySelector('input')!.value = INITIAL_VALUES.chenLeeMultiplier.toString();
+  aizawaInput.querySelector('input')!.value = INITIAL_VALUES.aizawaMultiplier.toString();
+  thomasInput.querySelector('input')!.value = INITIAL_VALUES.thomasMultiplier.toString();
+  lorenzMod2Input.querySelector('input')!.value = INITIAL_VALUES.lorenzMod2Multiplier.toString();
+  hadleyInput.querySelector('input')!.value = INITIAL_VALUES.hadleyMultiplier.toString();
+  halvorsenInput.querySelector('input')!.value = INITIAL_VALUES.halvorsenMultiplier.toString();
+  threeScrollInput.querySelector('input')!.value = INITIAL_VALUES.threeScrollMultiplier.toString();
+  coulletInput.querySelector('input')!.value = INITIAL_VALUES.coulletMultiplier.toString();
+  dadrasInput.querySelector('input')!.value = INITIAL_VALUES.dadrasMultiplier.toString();
 
- // update input label values
- speedInput.querySelector('p')!.textContent = INITIAL_VALUES.speed.toString();
- lorenzInput.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMultiplier.toString();
- arneodoInput.querySelector('p')!.textContent = INITIAL_VALUES.arneodoMultiplier.toString();
- burkeShawInput.querySelector('p')!.textContent = INITIAL_VALUES.burkeShawMultiplier.toString();
- chenLeeInput.querySelector('p')!.textContent = INITIAL_VALUES.chenLeeMultiplier.toString();
- aizawaInput.querySelector('p')!.textContent = INITIAL_VALUES.aizawaMultiplier.toString();
- thomasInput.querySelector('p')!.textContent = INITIAL_VALUES.thomasMultiplier.toString();
- lorenzMod2Input.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMod2Multiplier.toString();
- hadleyInput.querySelector('p')!.textContent = INITIAL_VALUES.hadleyMultiplier.toString();
- halvorsenInput.querySelector('p')!.textContent = INITIAL_VALUES.halvorsenMultiplier.toString();
- threeScrollInput.querySelector('p')!.textContent = INITIAL_VALUES.threeScrollMultiplier.toString();
- coulletInput.querySelector('p')!.textContent = INITIAL_VALUES.coulletMultiplier.toString();
- dadrasInput.querySelector('p')!.textContent = INITIAL_VALUES.dadrasMultiplier.toString();
+  // update input label values
+  speedInput.querySelector('p')!.textContent = INITIAL_VALUES.speed.toString();
+  lorenzInput.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMultiplier.toString();
+  arneodoInput.querySelector('p')!.textContent = INITIAL_VALUES.arneodoMultiplier.toString();
+  burkeShawInput.querySelector('p')!.textContent = INITIAL_VALUES.burkeShawMultiplier.toString();
+  chenLeeInput.querySelector('p')!.textContent = INITIAL_VALUES.chenLeeMultiplier.toString();
+  aizawaInput.querySelector('p')!.textContent = INITIAL_VALUES.aizawaMultiplier.toString();
+  thomasInput.querySelector('p')!.textContent = INITIAL_VALUES.thomasMultiplier.toString();
+  lorenzMod2Input.querySelector('p')!.textContent = INITIAL_VALUES.lorenzMod2Multiplier.toString();
+  hadleyInput.querySelector('p')!.textContent = INITIAL_VALUES.hadleyMultiplier.toString();
+  halvorsenInput.querySelector('p')!.textContent = INITIAL_VALUES.halvorsenMultiplier.toString();
+  threeScrollInput.querySelector('p')!.textContent = INITIAL_VALUES.threeScrollMultiplier.toString();
+  coulletInput.querySelector('p')!.textContent = INITIAL_VALUES.coulletMultiplier.toString();
+  dadrasInput.querySelector('p')!.textContent = INITIAL_VALUES.dadrasMultiplier.toString();
 }
 
 const createVbo = (gl: WebGL2RenderingContext, array: BufferSource | null, usage?: number) => {
@@ -443,7 +444,7 @@ const render = () => {
   gl.uniform1f(threeScrollLoc, threeScrollMultiplier);
   gl.uniform1f(coulletLoc, coulletMultiplier);
   gl.uniform1f(dadrasLoc, dadrasMultiplier);
-  
+
   // use forEach for extensibility later
   [positionVboRead].forEach((vbo, i) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
@@ -614,6 +615,24 @@ const addEventListeners = () => {
 
   resetParticlesButton.onclick = resetParticles;
   resetEverythingButton.onclick = resetEverything;
+
+  // take screenshot on click
+  const a = document.createElement('a');
+  document.body.appendChild(a);
+  a.style.display = 'none';
+  const saveBlob = (blob: Blob | null, fileName: string) => {
+    if (!blob) return;
+    const url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = fileName;
+    a.click();
+  };
+  saveImageButton.onclick = () => {
+    render();
+    canvas.toBlob((blob) => {
+      saveBlob(blob, `particles.png`);
+    });
+  }
 }
 
 

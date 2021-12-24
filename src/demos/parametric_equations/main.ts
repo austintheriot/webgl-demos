@@ -88,7 +88,7 @@ const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 const resetParticlesButton = document.querySelector('#reset-particles') as HTMLButtonElement;
 const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
 const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
-const loadingIndicator = document.querySelector('#loading') as HTMLParagraphElement;
+const messageElement = document.querySelector('#message') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
 const INPUT_DEFAULTS = {
   type: 'number',
@@ -223,7 +223,7 @@ const main = async () => {
     renderProgram = createProgram(gl, renderVertexShader, renderFragmentShader);
   } catch (e) {
     console.error(e);
-    loadingIndicator.textContent = `Error occurred: ${e}`;
+    messageElement.textContent = `Error occurred: ${e}`;
   }
 
   matrixLoc = gl.getUniformLocation(renderProgram, 'u_matrix') as WebGLUniformLocation;
@@ -241,7 +241,7 @@ const main = async () => {
   updateProjectionMatrix();
 
   // END LOADING ////////////////////////////////////////////////////////////////
-  loadingIndicator.remove();
+  messageElement.remove();
 
   // RENDER //////////////////////////////////////////////////////////////////
   animate();

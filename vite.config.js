@@ -8,6 +8,7 @@ module.exports = defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         strangeAttractors: resolve(__dirname, 'src/demos/strange_attractor/index.html'),
+        parametricEquations: resolve(__dirname, 'src/demos/parametric_equations/index.html'),
       }
     }
   }

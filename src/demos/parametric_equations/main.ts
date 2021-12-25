@@ -5,7 +5,7 @@ import {
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
 
-const NUM_POINTS = 2_500_000;
+const NUM_POINTS = 100_000;
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
 
@@ -85,7 +85,6 @@ let e = INITIAL_VALUES.e;
 let f = INITIAL_VALUES.f;
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
-const resetParticlesButton = document.querySelector('#reset-particles') as HTMLButtonElement;
 const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
 const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
 const messageElement = document.querySelector('#message') as HTMLParagraphElement;
@@ -214,8 +213,11 @@ const main = async () => {
   resetGui();
   addEventListeners();
 
-  // create initial particle positions
-  indexes = new Float32Array(Array.from({ length: NUM_POINTS }, (_, i) => i / 100));
+  // create initial particle positions:
+  indexes = new Float32Array(Array.from({ length: NUM_POINTS }, (_, i) => (
+    // double every two indexes, i.e. 0, 1, 1, 2, 2 for smooth line connections
+    Math.floor((i + 1) / 2) / 10)
+  ));
 
   try {
     const renderVertexShader = createShader(gl, gl.VERTEX_SHADER, renderVertexShaderSource);
@@ -303,7 +305,7 @@ const render = () => {
   const viewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
   gl.uniformMatrix4fv(matrixLoc, false, viewProjectionMatrix);
 
-  gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
+  gl.drawArrays(gl.LINES, 0, NUM_POINTS);
 }
 
 const resetEverything = () => {

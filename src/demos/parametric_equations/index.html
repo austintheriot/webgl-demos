@@ -48,8 +48,9 @@
     }
 
     input[type=range] {
-      display: block;
       width: 100%;
+      display: block;
+      margin-left: 1rem;
     }
 
     .margin-bottom {
@@ -57,7 +58,7 @@
       margin-bottom: 1rem;
     }
 
-    #loading {
+    #message {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -73,16 +74,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="https://austintheriot.github.io/webgl-demos/assets/strangeAttractors.866bf566.js"></script>
+  <script type="module" crossorigin src="https://austintheriot.github.io/webgl-demos/assets/parametricEquations.46c49b78.js"></script>
   <link rel="modulepreload" href="https://austintheriot.github.io/webgl-demos/assets/index.b6be8b9a.js">
 </head>
 
 <body>
-  <p id="loading">Loading...</p>
+  <p id="message">Loading...</p>
   <canvas></canvas>
   <div class="input-container">
-    <button type="button" id="reset-particles" class="margin-bottom">Reset Particles</button>
-    <button type="button" id="reset-everything" class="margin-bottom">Reset Everything</button>
+    <button type="button" id="reset-everything" class="margin-bottom">Reset</button>
     <button type="button" id="save-image" class="margin-bottom">Save Image</button>
   </div>
 </body>

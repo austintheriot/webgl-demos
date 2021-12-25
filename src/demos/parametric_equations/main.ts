@@ -5,7 +5,7 @@ import {
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
 
-const NUM_POINTS = 3_000_000;
+const NUM_POINTS = 1_000_000;
 const INDEX_DIVIDER = 100;
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
@@ -90,6 +90,7 @@ const resetEverythingButton = document.querySelector('#reset-everything') as HTM
 const resetCameraButton = document.querySelector('#reset-camera') as HTMLButtonElement;
 const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
 const toggleMenuButton = document.querySelector('#toggle-menu-button') as HTMLButtonElement;
+const setTo1Button = document.querySelector('#reset-to-1') as HTMLButtonElement;
 const messageElement = document.querySelector('#message') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
 const INPUT_DEFAULTS = {
@@ -173,6 +174,24 @@ inputContainer.append(
   eInput,
   fInput,
 )
+
+const setTo1 = () => {
+  a = 1;
+  b = 1; 
+  c = 1;
+  d = 1; 
+  e = 1;
+  f = 1;
+  
+  aInput.querySelector('input')!.value = '1';
+  bInput.querySelector('input')!.value = '1';
+  cInput.querySelector('input')!.value = '1';
+  dInput.querySelector('input')!.value = '1';
+  eInput.querySelector('input')!.value = '1';
+  fInput.querySelector('input')!.value = '1';
+
+  shouldRender = true;
+}
 
 const resetCamera = () => {
   rotateX = INITIAL_VALUES.rotateX;
@@ -387,8 +406,8 @@ const addEventListeners = () => {
     prevTouchY = nextClientY;
     const px = dx / width;
     const py = dy / height;
-    rotateY -= px * 5;
-    addToRotateX(-py * 5);
+    rotateY += px * 5;
+    addToRotateX(py * 5);
     updateProjectionMatrix();
   }
 
@@ -409,8 +428,8 @@ const addEventListeners = () => {
     prevDragY = nextClientY;
     const px = dx / width;
     const py = dy / height;
-    rotateY -= px * 5;
-    addToRotateX(-py * 5);
+    rotateY += px * 5;
+    addToRotateX(py * 5);
     updateProjectionMatrix();
   }
 
@@ -428,6 +447,7 @@ const addEventListeners = () => {
     updateProjectionMatrix();
   });
 
+  setTo1Button.onclick = setTo1;
   resetEverythingButton.onclick = resetEverything;
   resetCameraButton.onclick = resetCamera;
   toggleMenuButton.onclick = () => {

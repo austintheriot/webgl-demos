@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     * {
       font-family: 'Roboto', sans-serif;
@@ -20,13 +23,14 @@
     h3,
     h4,
     h5,
-    h6,
-    p {
-      font-weight: lighter;
+    h6 {
+      margin-top: 4rem;
+      font-weight: normal;
     }
 
     a,
     p {
+      font-weight: lighter;
       font-size: 1.2rem;
       line-height: 1.5;
     }
@@ -46,6 +50,20 @@
       display: block;
       width: 100%;
     }
+
+    code {
+      font-family: 'Roboto Mono', monospace;
+      font-weight: lighter;
+      background-color: #efefefff;
+      padding: 0.1rem;
+    }
+
+    .code-block {
+      white-space: pre-line;
+      display: block;
+      width: 100%;
+      padding: 1rem;
+    }
   </style>
 </head>
 
@@ -57,6 +75,27 @@
     <h2>About</h2>
     <p>This website is a space for displaying some of my endeavors into WebGL, WebGL2, and other general
       computer graphics technologies and concepts.</p>
+    <h2>Parametric Equations</h2>
+    <p>An amazing (and often beautiful) variety of unique 3-dimensional patterns can be discovered by graphing the
+      following parametric equation:</p>
+    <code class="code-block">x = cos(At) + sin(Bt)
+      y = cos(Ct) + sin(Dt)
+      z = cos(Et) + sin(Ft)</code>
+    <p>where <code>A</code>, <code>B</code>, <code>C</code>, <code>D</code>, <code>E</code>, and <code>F</code> are
+      arbitrary constants, and <code>t</code> increments upward (theoretically towards infinity).</p>
+    <p>
+      It's amazing how minute adjustments to these constants (sometimes differing by only by 0.001) can produce wildly
+      different results.
+    </p>
+    <p>
+      Below you can find a live, editable demo as well as a gallery of interesting combinations I've found. If you come
+      up with your own interesting pattern, I'd love to see it!
+    </p>
+    <a href="https://austintheriot.github.io/webgl-demos/src/demos/parametric_equations/index.html" class="demo-link">Live
+      Demo</a>
+    <a href="/parametric_equations.png">
+      <img src="https://austintheriot.github.io/webgl-demos/parametric_equations.png" />
+    </a>
     <h2>Interpolating Strange Attractors</h2>
     <p>The term "strange attractor" is sometimes used in mathematics to describe a chaotic system that seems to be
       attracted to an ideal behavior. In this project, I was interested in what would happen if I combined multiple
@@ -64,8 +103,8 @@
       its slider. Check out the live demo and see what interesting patterns you can create. Use WASD keys or drag/touch
       to rotate. Scroll mousewheel to zoom in and out.
     </p>
-    <a href="https://austintheriot.github.io/webgl-demos/src/demos/strange_attractor/index.html"
-      class="demo-link">Live Demo</a>
+    <a href="https://austintheriot.github.io/webgl-demos/src/demos/strange_attractor/index.html" class="demo-link">Live
+      Demo</a>
     <a href="/particles.png">
       <img src="https://austintheriot.github.io/webgl-demos/particles.png" />
     </a>

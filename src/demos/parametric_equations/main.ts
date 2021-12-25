@@ -5,7 +5,8 @@ import {
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
 
-const NUM_POINTS = 100_000;
+const NUM_POINTS = 3_000_000;
+const INDEX_DIVIDER = 100;
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
 
@@ -88,6 +89,7 @@ const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
 const resetCameraButton = document.querySelector('#reset-camera') as HTMLButtonElement;
 const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
+const toggleMenuButton = document.querySelector('#toggle-menu-button') as HTMLButtonElement;
 const messageElement = document.querySelector('#message') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
 const INPUT_DEFAULTS = {
@@ -222,8 +224,8 @@ const main = async () => {
   // create initial particle positions:
   indexes = new Float32Array(Array.from({ length: NUM_POINTS }, (_, i) => (
     // double every two indexes, i.e. 0, 1, 1, 2, 2 for smooth line connections
-    Math.floor((i + 1) / 2) / 10)
-  ));
+   i / INDEX_DIVIDER
+  )));
 
   try {
     const renderVertexShader = createShader(gl, gl.VERTEX_SHADER, renderVertexShaderSource);
@@ -311,7 +313,7 @@ const render = () => {
   const viewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
   gl.uniformMatrix4fv(matrixLoc, false, viewProjectionMatrix);
 
-  gl.drawArrays(gl.LINES, 0, NUM_POINTS);
+  gl.drawArrays(gl.POINTS, 0, NUM_POINTS);
 }
 
 const resetEverything = () => {
@@ -428,6 +430,11 @@ const addEventListeners = () => {
 
   resetEverythingButton.onclick = resetEverything;
   resetCameraButton.onclick = resetCamera;
+  toggleMenuButton.onclick = () => {
+    inputContainer.classList.toggle('menu-closed');
+    toggleMenuButton.classList.toggle('menu-button-open');
+    inputContainer.toggleAttribute('aria-hidden');
+  }
 
   // take screenshot on click
   const link = document.createElement('a');

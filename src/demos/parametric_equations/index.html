@@ -8,6 +8,11 @@
   <title>Particles</title>
   <script src="./main.ts" defer type="module"></script>
   <style>
+    :root {
+      --input-container-width: 200px;
+      --animation-speed: 0.2s;
+    }
+
     body {
       display: flex;
       justify-content: center;
@@ -26,7 +31,7 @@
     .input-container {
       position: absolute;
       z-index: 1;
-      width: 200px;
+      width: var(--input-container-width);
       max-height: calc(100vh - 4rem);
       overflow-y: scroll;
       top: 1rem;
@@ -34,6 +39,64 @@
       background-color: #fff3;
       padding: 1rem;
       border-radius: 5px;
+      transition: transform var(--animation-speed);
+    }
+
+    .menu-closed {
+      transform: translateX(calc(var(--input-container-width) * -1 - 3rem));
+    }
+
+    .menu-button-open {
+      transform: translateX(calc(var(--input-container-width) + 3rem));
+    }
+
+    #toggle-menu-button {
+      position: fixed;
+      left: 1rem;
+      top: 1rem;
+      height: 3rem;
+      width: 3rem;
+      background-color: transparent;
+      border: none;
+      outline: none;
+      transition: transform var(--animation-speed);
+      cursor: pointer;
+    }
+
+    #toggle-menu-button span {
+      display: block;
+      height: 2px;
+      background-color: white;
+      position: absolute;
+      left: 10%;
+      border-radius: 1rem;
+      transition: transform 0.6s, width 0.6s;
+    }
+
+    #toggle-menu-button span:nth-of-type(1) {
+      top: 25%;
+      width: 80%;
+      
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(1) {
+      transform: translate(0, 12px) rotate(45deg);
+    }
+
+    #toggle-menu-button span:nth-of-type(2) {
+      top: 50%;
+      width: 40%;
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(2) {
+      transform: translate(2px, -8px) rotate(45deg);
+    }
+
+    #toggle-menu-button span:nth-of-type(3) {
+      top: 75%;
+      width: 60%;
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(3) {
+      transform: translate(-1px, -13px) rotate(135deg);
+      width: 80%;
     }
 
     label {
@@ -77,9 +140,14 @@
 </head>
 
 <body>
+  <button type="button" id="toggle-menu-button" aria-label="toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
   <p id="message">Loading...</p>
   <canvas></canvas>
-  <div class="input-container">
+  <div class="input-container menu-closed" aria-hidden="true">
     <button type="button" id="reset-camera" class="margin-bottom">Reset Camera</button>
     <button type="button" id="reset-everything" class="margin-bottom">Reset Everything</button>
     <button type="button" id="save-image" class="margin-bottom">Save Image</button>

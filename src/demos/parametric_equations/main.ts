@@ -86,6 +86,7 @@ let f = INITIAL_VALUES.f;
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 const resetEverythingButton = document.querySelector('#reset-everything') as HTMLButtonElement;
+const resetCameraButton = document.querySelector('#reset-camera') as HTMLButtonElement;
 const saveImageButton = document.querySelector('#save-image') as HTMLButtonElement;
 const messageElement = document.querySelector('#message') as HTMLParagraphElement;
 const inputContainer = document.querySelector('.input-container') as HTMLDivElement;
@@ -171,11 +172,15 @@ inputContainer.append(
   fInput,
 )
 
-const resetStateValues = () => {
+const resetCamera = () => {
   rotateX = INITIAL_VALUES.rotateX;
   rotateY = INITIAL_VALUES.rotateY;
   rotateZ = INITIAL_VALUES.rotateZ;
   translateZ = INITIAL_VALUES.translateZ;
+  updateProjectionMatrix();
+}
+
+const resetStateValues = () => {
   a = INITIAL_VALUES.a;
   b = INITIAL_VALUES.b;
   c = INITIAL_VALUES.c;
@@ -209,6 +214,7 @@ const main = async () => {
   gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
   if (!gl) throw err('WebGL not supported', { gl });
 
+  resetCamera();
   resetStateValues();
   resetGui();
   addEventListeners();
@@ -309,6 +315,7 @@ const render = () => {
 }
 
 const resetEverything = () => {
+  resetCamera();
   resetStateValues();
   resetGui();
   updateProjectionMatrix();
@@ -420,6 +427,7 @@ const addEventListeners = () => {
   });
 
   resetEverythingButton.onclick = resetEverything;
+  resetCameraButton.onclick = resetCamera;
 
   // take screenshot on click
   const link = document.createElement('a');

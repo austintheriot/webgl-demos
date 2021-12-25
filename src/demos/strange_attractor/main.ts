@@ -7,7 +7,7 @@ import drawVertexShaderSource from './draw_vertex.glsl?raw'
 import updateFragmentShaderSource from './update_fragment.glsl?raw'
 import updateVertexShaderSource from './update_vertex.glsl?raw'
 
-const NUM_POINTS = 1_000_000;
+const NUM_POINTS = 100_000;
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
 

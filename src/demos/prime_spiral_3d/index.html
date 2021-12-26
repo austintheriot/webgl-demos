@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particles</title>
+  <script src="./main.ts" defer type="module"></script>
+  <style>
+    :root {
+      --input-container-width: 200px;
+      --animation-speed: 0.2s;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      position: 'relative';
+      background-color: black;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      cursor: grab;
+    }
+
+    .input-container {
+      position: absolute;
+      z-index: 1;
+      width: var(--input-container-width);
+      max-height: calc(100vh - 4rem);
+      overflow-y: scroll;
+      top: 1rem;
+      left: 1rem;
+      background-color: #fff3;
+      padding: 1rem;
+      border-radius: 5px;
+      transition: transform var(--animation-speed);
+    }
+
+    .menu-closed {
+      transform: translateX(calc(var(--input-container-width) * -1 - 3rem));
+    }
+
+    .menu-button-open {
+      transform: translateX(calc(var(--input-container-width) + 3rem));
+    }
+
+    #toggle-menu-button {
+      position: fixed;
+      left: 1rem;
+      top: 1rem;
+      height: 3rem;
+      width: 3rem;
+      background-color: transparent;
+      border: none;
+      outline: none;
+      transition: transform var(--animation-speed);
+      cursor: pointer;
+    }
+
+    #toggle-menu-button span {
+      display: block;
+      height: 2px;
+      background-color: white;
+      position: absolute;
+      left: 10%;
+      border-radius: 1rem;
+      transition: transform 0.6s, width 0.6s;
+    }
+
+    #toggle-menu-button span:nth-of-type(1) {
+      top: 25%;
+      width: 80%;
+      
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(1) {
+      transform: translate(0, 12px) rotate(45deg);
+    }
+
+    #toggle-menu-button span:nth-of-type(2) {
+      top: 50%;
+      width: 40%;
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(2) {
+      transform: translate(2px, -8px) rotate(45deg);
+    }
+
+    #toggle-menu-button span:nth-of-type(3) {
+      top: 75%;
+      width: 60%;
+    }
+    #toggle-menu-button.menu-button-open span:nth-of-type(3) {
+      transform: translate(-1px, -13px) rotate(135deg);
+      width: 80%;
+    }
+
+    label {
+      display: block;
+      color: white;
+      margin: 1rem auto;
+    }
+
+    label p {
+      display: inline-block;
+      margin: 0 1rem;
+    }
+
+    input[type=range] {
+      width: 100%;
+      display: block;
+      margin-left: 1rem;
+    }
+
+    .margin-bottom {
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    #message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      width: fit-content;
+      max-width: 95%;
+      max-height: 95%;
+      overflow-y: scroll;
+      color: white;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <button type="button" id="toggle-menu-button" aria-label="toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <p id="message">Loading...</p>
+  <canvas></canvas>
+  <div class="input-container menu-closed" aria-hidden="true">
+    <button type="button" id="reset-camera" class="margin-bottom">Reset Camera</button>
+    <button type="button" id="reset-everything" class="margin-bottom">Reset Everything</button>
+    <button type="button" id="reset-to-1" class="margin-bottom">Set All To 1</button>
+    <button type="button" id="save-image" class="margin-bottom">Save Image</button>
+  </div>
+</body>
+
+</html>

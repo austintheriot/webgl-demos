@@ -1,3 +1,5 @@
+export * from './primes';
+
 export const err = <D extends Record<string, unknown>>(msg: string, data: D) => {
   console.error(msg, data);
   return new Error(msg);

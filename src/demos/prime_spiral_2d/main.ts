@@ -4,7 +4,7 @@ import {
 } from "../utils";
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
-import { primes } from './primes';
+import { primes_100_000 as primes } from '../utils';
 
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
@@ -32,9 +32,9 @@ let moveCameraX = 0;
 let moveCameraY = 0;
 let moveCameraZ = 1;
 
-let scaleX = 1;
-let scaleY = 1;
-let scaleZ = 1;
+let scaleX = 0.0001;
+let scaleY = 0.0001;
+let scaleZ = 0.0001;
 
 let rotateX = INITIAL_VALUES.rotateX;
 let rotateY = INITIAL_VALUES.rotateY;
@@ -361,7 +361,7 @@ const addEventListeners = () => {
     let updated = false;
     switch (e.key) {
       case 'w':
-        addToRotateX(-0.05);
+        addToRotateX(0.05);
         updated = true;
         break;
       case 'a':
@@ -369,7 +369,7 @@ const addEventListeners = () => {
         updated = true;
         break;
       case 's':
-        addToRotateX(0.05);
+        addToRotateX(-0.05);
         updated = true;
         break;
       case 'd':

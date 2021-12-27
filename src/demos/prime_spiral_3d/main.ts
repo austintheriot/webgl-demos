@@ -4,7 +4,7 @@ import {
 } from "../utils";
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
-import { primes } from './primes_10_000';
+import { primes_100_000 as primes } from '../utils';
 
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);
@@ -24,17 +24,17 @@ const INITIAL_VALUES = {
 }
 
 // camera state
-let rotateCameraX = 0;
-let rotateCameraY = 0;
+let rotateCameraX = -0.5;
+let rotateCameraY = 0.5;
 let rotateCameraZ = 0;
 
 let moveCameraX = 0;
 let moveCameraY = 0;
 let moveCameraZ = 1;
 
-let scaleX = 1;
-let scaleY = 1;
-let scaleZ = 1;
+let scaleX = 0.4;
+let scaleY = 0.4;
+let scaleZ = 0.4;
 
 let rotateX = INITIAL_VALUES.rotateX;
 let rotateY = INITIAL_VALUES.rotateY;
@@ -339,7 +339,7 @@ const resetEverything = () => {
 
 const animate = () => {
   t += 0.01;
-  a = Math.sin(t) * 0.00005;
+  a = Math.sin(t) * 0.000025;
   updateProjectionMatrix();
   if (shouldRender) render();
   requestAnimationFrame(animate);
@@ -364,7 +364,7 @@ const addEventListeners = () => {
     let updated = false;
     switch (e.key) {
       case 'w':
-        addToRotateX(-0.05);
+        addToRotateX(0.05);
         updated = true;
         break;
       case 'a':
@@ -372,7 +372,7 @@ const addEventListeners = () => {
         updated = true;
         break;
       case 's':
-        addToRotateX(0.05);
+        addToRotateX(-0.05);
         updated = true;
         break;
       case 'd':

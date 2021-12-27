@@ -338,8 +338,11 @@ const resetEverything = () => {
 }
 
 const animate = () => {
+  // add rotation and theta adjustment
   t += 0.01;
-  a = Math.sin(t) * 0.000025;
+  const value = Math.sin(t);
+  a = value * 0.000025;
+  rotateZ = value;
   updateProjectionMatrix();
   if (shouldRender) render();
   requestAnimationFrame(animate);

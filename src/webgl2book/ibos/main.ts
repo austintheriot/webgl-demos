@@ -9,6 +9,9 @@ let gl: WebGL2RenderingContext;
 let program: WebGLProgram;
 let vertexBuffer: WebGLBuffer | null;
 let indexBuffer: WebGLBuffer | null;
+let positionALocation: number;
+let vertexArray: number[];
+let indexArray: number[];
 
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
@@ -27,21 +30,19 @@ const main = async () => {
     messageElement.textContent = `Error occurred: ${e}`;
   }
 
-  const positionALocation = gl.getAttribLocation(program, 'a_position');
+  positionALocation = gl.getAttribLocation(program, 'a_position');
 
   // initialize buffers
-  const verticesArray = [-0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,]
+  vertexArray = [-0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,]
   vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesArray), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(positionALocation, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(positionALocation);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-  const indicesArray = [0, 1, 2, 0, 2, 3];
+  indexArray = [0, 1, 2, 0, 2, 3];
   indexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indicesArray), gl.STATIC_DRAW);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexArray), gl.STATIC_DRAW);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
   messageElement.remove();
@@ -60,9 +61,20 @@ const render = () => {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // use indices to get vertex positions
+  // enable vertex buffer
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.vertexAttribPointer(positionALocation, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(positionALocation);
+
+  // use indices to get vertex data rather than pulling directly from buffer
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-  gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+
+  // render
+  gl.drawElements(gl.TRIANGLES, indexArray.length, gl.UNSIGNED_SHORT, 0);
+
+  // clean up
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
 main();

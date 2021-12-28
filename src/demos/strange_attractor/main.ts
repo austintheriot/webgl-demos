@@ -1,7 +1,7 @@
 import {
   createProgram, createTransformFeedbackProgram, createShader, degreesToRadians,
   err, matrix4x4, resizeCanvasToDisplaySize, createInput
-} from "../utils";
+} from "../../utils";
 import drawFragmentShaderSource from './draw_fragment.glsl?raw'
 import drawVertexShaderSource from './draw_vertex.glsl?raw'
 import updateFragmentShaderSource from './update_fragment.glsl?raw'

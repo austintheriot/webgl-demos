@@ -1,10 +1,10 @@
 import {
   createProgram, createShader, degreesToRadians,
   err, matrix4x4, resizeCanvasToDisplaySize, createInput
-} from "../utils";
+} from "../../utils";
 import renderFragmentShaderSource from './render_fragment.glsl?raw'
 import renderVertexShaderSource from './render_vertex.glsl?raw'
-import { primes_100_000 as primes } from '../utils';
+import { primes_100_000 as primes } from '../../utils';
 
 const ROTATE_X_MIN_RADIANS = degreesToRadians(-60);
 const ROTATE_X_MAX_RADIANS = degreesToRadians(60);

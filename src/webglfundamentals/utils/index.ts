@@ -173,6 +173,15 @@ export const subtractVec3 = (a: Vec3, b: Vec3): Vec3 => {
   return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 };
 
+/** Adds two vec3s */
+export const addVec3 = (a: Vec3, b: Vec3): Vec3 => {
+  return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+};
+
+export const multiplyVec3 = (vec: Vec3, n: number): Vec3 => {
+  return [vec[0] * n, vec[1] * n, vec[2] * n];
+};
+
 /** Normalizes a vector to length of 1 */
 export const normalizeVec3 = (v: Vec3): Vec3 => {
   const length = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);

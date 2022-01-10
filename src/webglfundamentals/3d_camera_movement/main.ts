@@ -16,14 +16,8 @@ let fieldOfViewRadians = degreesToRadians(60);
 let zNear = 0.1;
 let zFar = 100;
 
-// user movement
-let prevTouchX: number;
-let prevTouchY: number;
-let prevDragX: number;
-let prevDragY: number;
-let mouseDown = false;
-
 // camera
+const LOOK_SENSITIVITY = 100;
 let pitch = 0;
 let yaw = -90; // turn from looking "down" the x axis to looking "up" the z-axis
 let cameraPos: Vec3 = [0, 0.1, 2];
@@ -122,10 +116,9 @@ const render = () => {
   }
 }
 
-const DRAG_SENSITIVITY = 100;
 const updateCamera = (px = 0, py: number = 0) => {
-  yaw += -px * DRAG_SENSITIVITY;
-  pitch += py * DRAG_SENSITIVITY;
+  yaw += px * LOOK_SENSITIVITY;
+  pitch += py * LOOK_SENSITIVITY;
 
   let newCameraFront: Vec3 = [0, 0, 0];
   newCameraFront[0] = Math.cos(degreesToRadians(yaw)) * Math.cos(degreesToRadians(pitch));
@@ -149,6 +142,7 @@ const initInputs = () => {
     const cameraSpeed = 0.1;
     switch (e.key) {
       case 'w':
+        console.log(e);
         cameraPos = addVec3(cameraPos, multiplyVec3(cameraFront, cameraSpeed));
         updated = true;
         break;
@@ -174,50 +168,29 @@ const initInputs = () => {
     }
   })
 
-  canvas.ontouchstart = (e) => {
-    prevTouchY = e.touches[0]?.clientY;
-    prevTouchX = e.touches[0]?.clientX;
-  }
+  const enableButton = document.querySelector('#enable') as HTMLButtonElement;
+  enableButton.addEventListener('click', () => {
+    canvas.requestPointerLock();
+  });
 
-  canvas.ontouchmove = (e) => {
-    const { width, height } = canvas.getBoundingClientRect();
-    const nextClientX = e.touches[0]?.clientX;
-    const nextClientY = e.touches[0]?.clientY;
-    const dx = nextClientX - prevTouchX;
-    const dy = nextClientY - prevTouchY;
-    prevTouchX = nextClientX;
-    prevTouchY = nextClientY;
-    const px = dx / width;
-    const py = dy / height;
-    updateCamera(px, py);
-    updateMatrix();
-    render();
-  }
-
-  canvas.onmousedown = (e) => {
-    mouseDown = true;
-    prevDragX = e.clientX;
-    prevDragY = e.clientY;
-  }
+  // show/hide message
+  document.addEventListener('pointerlockchange', () => {
+    const backdrop = document.querySelector('#backdrop') as HTMLDivElement;
+    if (document.pointerLockElement === canvas) {
+      backdrop.classList.add('hide');
+    } else {
+      backdrop.classList.remove('hide');
+    }
+  });
 
   canvas.onmousemove = (e) => {
-    if (!mouseDown) return;
     const { width, height } = canvas.getBoundingClientRect();
-    const nextClientX = e.clientX;
-    const nextClientY = e.clientY;
-    const dx = nextClientX - prevDragX;
-    const dy = nextClientY - prevDragY;
-    prevDragX = nextClientX;
-    prevDragY = nextClientY;
-    const px = dx / width;
-    const py = dy / height;
+    const px = e.movementX / width;
+    const py = -e.movementY / height;
     updateCamera(px, py);
     updateMatrix();
     render();
   }
-
-  canvas.onmouseup = () => mouseDown = false;
-  canvas.onmouseleave = () => mouseDown = false;
 }
 
 

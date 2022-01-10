@@ -17,7 +17,15 @@ let zNear = 0.1;
 let zFar = 100;
 
 // camera
-const LOOK_SENSITIVITY = 100;
+const controlsDownMap = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+};
+const LOOK_SENSITIVITY = 120;
+const VELOCITY_SENSITIVITY = 0.0005;
+const VELOCITY_DAMPING = 0.9;
 let pitch = 0;
 let yaw = -90; // turn from looking "down" the x axis to looking "up" the z-axis
 let cameraVelocity: Vec3 = [0, 0, 0];
@@ -78,10 +86,21 @@ const main = async () => {
   requestAnimationFrame(render);
 }
 
-const updatePosition = () => {
-  cameraPos[0] += cameraVelocity[0];
-  cameraPos[1] += cameraVelocity[1];
-  cameraPos[2] += cameraVelocity[2];
+const updatePosition = (dt: number) => {
+  cameraPos[0] += cameraVelocity[0] * dt;
+  cameraPos[1] += cameraVelocity[1] * dt;
+  cameraPos[2] += cameraVelocity[2] * dt;
+}
+
+const updateVelocity = () => {
+  if (controlsDownMap.w) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(cameraFront, VELOCITY_SENSITIVITY));
+  if (controlsDownMap.a) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
+  if (controlsDownMap.s) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(cameraFront, VELOCITY_SENSITIVITY));
+  if (controlsDownMap.d) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
+
+  cameraVelocity[0] *= VELOCITY_DAMPING;
+  cameraVelocity[1] *= VELOCITY_DAMPING;
+  cameraVelocity[2] *= VELOCITY_DAMPING;
 }
 
 const updateCamera = (px = 0, py: number = 0) => {
@@ -95,12 +114,9 @@ const updateCamera = (px = 0, py: number = 0) => {
   cameraFront = normalizeVec3(newCameraFront);
 }
 
-
-
 /** Update transformation matrix with new transformation state */
 const updateMatrix = () => {
-  let projectionMatrix = matrix4x4.createIdentityMatrix();
-  projectionMatrix = matrix4x4.createPerspectiveMatrix(fieldOfViewRadians, gl.canvas.clientWidth / gl.canvas.clientHeight, zNear, zFar);
+  const projectionMatrix = matrix4x4.createPerspectiveMatrix(fieldOfViewRadians, gl.canvas.clientWidth / gl.canvas.clientHeight, zNear, zFar);
   const lookAtTarget = addVec3(cameraPos, cameraFront);
   const cameraMatrix = matrix4x4.createLookAtMatrix(cameraPos, lookAtTarget, cameraUp);
   const viewMatrix = matrix4x4.inverse(cameraMatrix);
@@ -108,8 +124,15 @@ const updateMatrix = () => {
 }
 
 /** Draw to canvas */
-const render = () => {
-  updatePosition();
+let prevNow: number | null = null;
+const render = (now: number) => {
+  if (prevNow === null) prevNow = now;
+  const dt = now - prevNow;
+  prevNow = now;
+
+  updatePosition(dt);
+  updateVelocity();
+  updateCamera();
   updateMatrix();
 
   resizeCanvasToDisplaySize(gl.canvas);
@@ -147,34 +170,42 @@ const initInputs = () => {
     updateMatrix();
   });
 
-  // adjust camera velocity
+  // keep track of which keys are down -- this allows incrementing 
+  // velocity based on multiple keys at once
   window.addEventListener('keydown', (e) => {
-    let updated = false;
-    const velocitySensitivity = 0.001;
     switch (e.key) {
       case 'w':
-        console.log({ cameraVelocity });
-        cameraVelocity = addVec3(cameraVelocity, multiplyVec3(cameraFront, velocitySensitivity));
-        updated = true;
-        break;
-      case 's':
-        cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(cameraFront, velocitySensitivity));
-        updated = true;
+        controlsDownMap.w = true;
         break;
       case 'a':
-        cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), velocitySensitivity));
-        updated = true;
+        controlsDownMap.a = true;
+        break;
+      case 's':
+        controlsDownMap.s = true;
         break;
       case 'd':
-        cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), velocitySensitivity));
-        updated = true;
+        controlsDownMap.d = true;
         break;
       default:
         break;
     }
-    if (updated) {
-      updateCamera();
-      updateMatrix();
+  })
+  window.addEventListener('keyup', (e) => {
+    switch (e.key) {
+      case 'w':
+        controlsDownMap.w = false;
+        break;
+      case 'a':
+        controlsDownMap.a = false;
+        break;
+      case 's':
+        controlsDownMap.s = false;
+        break;
+      case 'd':
+        controlsDownMap.d = false;
+        break;
+      default:
+        break;
     }
   })
 

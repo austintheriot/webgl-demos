@@ -163,6 +163,11 @@ export type Vec2 = [number, number];
 export type Vec3 = [number, number, number];
 export type Vec4 = [number, number, number, number];
 
+/** Calculates the dot product of two vec3s */
+export const dotVec3 = (a: Vec3, b: Vec3): number => {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+};
+
 /** Calculates the cross product of two vec3s */
 export const crossVec3 = (a: Vec3, b: Vec3): Vec3 => {
   return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -294,6 +299,37 @@ export const matrix4x4 = {
        cameraPosition[2],
        1,
     ];
+  },
+
+  _lookAt: (cameraPosition: Vec3, target: Vec3, up: Vec3): Matrix4x4 => {
+    var zAxis = normalizeVec3(subtractVec3(cameraPosition, target));
+    var xAxis = normalizeVec3(crossVec3(up, zAxis));
+    var yAxis = normalizeVec3(crossVec3(zAxis, xAxis));
+ 
+    return [
+       xAxis[0], xAxis[1], xAxis[2], 0,
+       yAxis[0], yAxis[1], yAxis[2], 0,
+       zAxis[0], zAxis[1], zAxis[2], 0,
+       -dotVec3(xAxis, cameraPosition),  -dotVec3(yAxis, cameraPosition),  -dotVec3(zAxis, cameraPosition), 1,
+    ];
+  },
+
+  __lookAt: (cameraPosition: Vec3, cameraDirection: Vec3): Matrix4x4 => {
+    const up: Vec3 = [0, 1, 0];
+    const cameraRight: Vec3 = normalizeVec3(crossVec3(up, cameraDirection));
+    const cameraUp: Vec3 = crossVec3(cameraDirection, cameraRight);
+
+    return matrix4x4.multiply([
+      cameraRight[0], cameraRight[1], cameraRight[2], 0,
+      cameraUp[0], cameraUp[1], cameraUp[2], 0,
+      cameraDirection[0], cameraDirection[1], cameraDirection[2], 0,
+      0, 0, 0, 1,
+    ], [
+      1, 0, 0, -cameraPosition[0],
+      0, 1, 0, -cameraPosition[1],
+      0, 0, 1, -cameraPosition[2],
+      0, 0, 0, 1,
+    ])
   },
 
   /** Multiply two 4x4 matrixes together */

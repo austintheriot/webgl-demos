@@ -86,6 +86,8 @@ const main = async () => {
   requestAnimationFrame(render);
 }
 
+/** Using dt to scale position ensures that users who 
+ * are running with varies framerate will always move the same speed */
 const updatePosition = (dt: number) => {
   cameraPos[0] += cameraVelocity[0] * dt;
   cameraPos[1] += cameraVelocity[1] * dt;

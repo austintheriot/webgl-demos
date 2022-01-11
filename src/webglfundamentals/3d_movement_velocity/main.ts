@@ -1,5 +1,5 @@
 import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
-import { addVec3, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
+import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
 const NUM_OF_FS = 6;
@@ -22,6 +22,8 @@ const controlsDownMap = {
   a: false,
   s: false,
   d: false,
+  space: false,
+  shift: false,
 };
 const LOOK_SENSITIVITY = 120;
 const VELOCITY_SENSITIVITY = 0.0005;
@@ -99,6 +101,8 @@ const updateVelocity = () => {
   if (controlsDownMap.a) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
   if (controlsDownMap.s) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(cameraFront, VELOCITY_SENSITIVITY));
   if (controlsDownMap.d) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
+  if (controlsDownMap.space) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
+  if (controlsDownMap.shift) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
 
   cameraVelocity[0] *= VELOCITY_DAMPING;
   cameraVelocity[1] *= VELOCITY_DAMPING;
@@ -108,6 +112,9 @@ const updateVelocity = () => {
 const updateCamera = (px = 0, py: number = 0) => {
   yaw += px * LOOK_SENSITIVITY;
   pitch += py * LOOK_SENSITIVITY;
+  pitch = clamp(-89, pitch, 89);
+
+  console.log(pitch);
 
   let newCameraFront: Vec3 = [0, 0, 0];
   newCameraFront[0] = Math.cos(degreesToRadians(yaw)) * Math.cos(degreesToRadians(pitch));
@@ -188,6 +195,12 @@ const initInputs = () => {
       case 'd':
         controlsDownMap.d = true;
         break;
+      case ' ':
+        controlsDownMap.space = true;
+        break;
+      case 'Shift':
+        controlsDownMap.shift = true;
+        break;
       default:
         break;
     }
@@ -205,6 +218,12 @@ const initInputs = () => {
         break;
       case 'd':
         controlsDownMap.d = false;
+        break;
+      case ' ':
+        controlsDownMap.space = false;
+        break;
+      case 'Shift':
+        controlsDownMap.shift = false;
         break;
       default:
         break;

@@ -13,7 +13,7 @@ let viewProjectionMatrix = matrix4x4.createIdentityMatrix();
 
 // view frustum
 let fieldOfViewRadians = degreesToRadians(60);
-let zNear = 0.1;
+let zNear = 0.0001;
 let zFar = 100;
 
 // camera

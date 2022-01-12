@@ -255,7 +255,6 @@ const initInputs = () => {
   window.onwheel = (e) => {
     fieldOfViewRadians += 0.01 * Math.sign(e.deltaY);
     fieldOfViewRadians = clamp(Math.PI / 16, fieldOfViewRadians, Math.PI / 2); // 11 degrees -> 90 deg
-    console.log(fieldOfViewRadians, radiansToDegrees(fieldOfViewRadians));
   }
 }
 

@@ -1,4 +1,4 @@
-import { crossVec3, normalizeVec3, radiansToDegrees, subtractVec3 } from "../../utils";
+import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
 import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 

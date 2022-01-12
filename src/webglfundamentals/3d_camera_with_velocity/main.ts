@@ -1,4 +1,4 @@
-import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
+import { crossVec3, normalizeVec3, radiansToDegrees, subtractVec3 } from "../../utils";
 import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
 
@@ -113,8 +113,6 @@ const updateCamera = (px = 0, py: number = 0) => {
   yaw += px * LOOK_SENSITIVITY;
   pitch += py * LOOK_SENSITIVITY;
   pitch = clamp(-89, pitch, 89);
-
-  console.log(pitch);
 
   let newCameraFront: Vec3 = [0, 0, 0];
   newCameraFront[0] = Math.cos(degreesToRadians(yaw)) * Math.cos(degreesToRadians(pitch));
@@ -251,6 +249,13 @@ const initInputs = () => {
     const py = -e.movementY / height;
     updateCamera(px, py);
     updateMatrix();
+  }
+
+  // allow "zooming"
+  window.onwheel = (e) => {
+    fieldOfViewRadians += 0.01 * Math.sign(e.deltaY);
+    fieldOfViewRadians = clamp(Math.PI / 16, fieldOfViewRadians, Math.PI / 2); // 11 degrees -> 90 deg
+    console.log(fieldOfViewRadians, radiansToDegrees(fieldOfViewRadians));
   }
 }
 

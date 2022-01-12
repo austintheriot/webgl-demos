@@ -1,6 +1,8 @@
 import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
 import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
 import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
+import vertexShaderSource from './vertex.glsl?raw';
+import fragmentShaderSource from './fragment.glsl?raw';
 
 const NUM_OF_FS = 6;
 const F_RADIUS = 0.5;
@@ -43,17 +45,10 @@ const main = async () => {
 
   initInputs();
 
-  const [vertexShaderSource, fragmentShaderSource] = await Promise.all([
-    fetch('./vertex.glsl'),
-    fetch('./fragment.glsl'),
-  ]).then(([vertex, fragment]) => Promise.all([
-    vertex.text(),
-    fragment.text()
-  ]));
-
   // create shaders from source code & link to program
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+  console.log({ fragmentShaderSource });
   const program = createProgram(gl, vertexShader, fragmentShader);
   gl.useProgram(program);
 

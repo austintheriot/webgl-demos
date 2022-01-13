@@ -1,6 +1,6 @@
 import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
 import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
-import { letter_f_3d_colors, letter_f_3d_vertices } from "./data";
+import { letterF3DColors, letterF3DVertices, letterF3DNormals } from "./data";
 import vertexShaderSource from './vertex.glsl?raw';
 import fragmentShaderSource from './fragment.glsl?raw';
 
@@ -10,8 +10,9 @@ const F_RADIUS = 0.5;
 // webgl
 let canvas: HTMLCanvasElement;
 let gl: WebGLRenderingContext;
-let matrixUniformLocation: WebGLUniformLocation;
-let viewProjectionMatrix = matrix4x4.createIdentityMatrix();
+let worldViewProjectionMatrixLocation: WebGLUniformLocation;
+let lightDirectionUniformLocation: WebGLUniformLocation;
+let worldViewProjectionMatrix = matrix4x4.createIdentityMatrix();
 
 // view frustum
 let fieldOfViewRadians = degreesToRadians(60);
@@ -36,6 +37,7 @@ let cameraVelocity: Vec3 = [0, 0, 0];
 let cameraPos: Vec3 = [0, 0.1, 2];
 let cameraFront: Vec3 = [0, 0, -1]; // start out "straight ahead"
 let cameraUp: Vec3 = [0, 1, 0];
+let paused = true;
 
 const main = async () => {
   canvas = document.querySelector('canvas') as HTMLCanvasElement;
@@ -48,32 +50,39 @@ const main = async () => {
   // create shaders from source code & link to program
   const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-  console.log({ fragmentShaderSource });
   const program = createProgram(gl, vertexShader, fragmentShader);
   gl.useProgram(program);
 
   // look up where the vertex data needs to go
   const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   const colorAttributeLocation = gl.getAttribLocation(program, 'a_color');
-  matrixUniformLocation = gl.getUniformLocation(program, 'u_matrix') as WebGLUniformLocation;
+  const normalAttributeLocation = gl.getAttribLocation(program, 'a_normal');
+  worldViewProjectionMatrixLocation = gl.getUniformLocation(program, 'u_world_view_projection') as WebGLUniformLocation;
+  lightDirectionUniformLocation = gl.getUniformLocation(program, 'u_reverse_light_direction') as WebGLUniformLocation;
 
   // VERTEX POSITION BUFFER //////////////////////////////////////////////////////////////////
-  // Create a buffer and put three 2d clip space points in it
   const positionBuffer = gl.createBuffer();
   if (!positionBuffer) throw err('error creating position buffer', { positionBuffer });
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.enableVertexAttribArray(positionAttributeLocation);
   gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letter_f_3d_vertices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letterF3DVertices), gl.STATIC_DRAW);
 
   // COLOR POSITION BUFFER //////////////////////////////////////////////////////////////////
-  // Create a buffer and put three 2d clip space points in it
   const colorBuffer = gl.createBuffer();
-  if (!colorBuffer) throw err('error creating position buffer', { colorBuffer });
+  if (!colorBuffer) throw err('error creating color buffer', { colorBuffer });
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.enableVertexAttribArray(colorAttributeLocation);
   gl.vertexAttribPointer(colorAttributeLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0)
-  gl.bufferData(gl.ARRAY_BUFFER, new Uint8ClampedArray(letter_f_3d_colors), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Uint8ClampedArray(letterF3DColors), gl.STATIC_DRAW);
+
+  // NORMAL POSITION BUFFER //////////////////////////////////////////////////////////////////
+  const normalBuffer = gl.createBuffer();
+  if (!normalBuffer) throw err('error creating normal buffer', { colorBuffer });
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.enableVertexAttribArray(normalAttributeLocation);
+  gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, true, 0, 0)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(letterF3DNormals), gl.STATIC_DRAW);
 
   // SET UNIFORMS //////////////////////////////////////////////////////////////////
   updateCamera();
@@ -119,15 +128,19 @@ const updateCamera = (px = 0, py: number = 0) => {
 /** Update transformation matrix with new transformation state */
 const updateMatrix = () => {
   const projectionMatrix = matrix4x4.createPerspectiveMatrix(fieldOfViewRadians, gl.canvas.clientWidth / gl.canvas.clientHeight, zNear, zFar);
-  const lookAtTarget = addVec3(cameraPos, cameraFront);
-  const cameraMatrix = matrix4x4.createLookAtMatrix(cameraPos, lookAtTarget, cameraUp);
+  const cameraMatrix = matrix4x4.createLookAtMatrix(cameraPos, addVec3(cameraPos, cameraFront), cameraUp);
   const viewMatrix = matrix4x4.inverse(cameraMatrix);
-  viewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
+  worldViewProjectionMatrix = matrix4x4.multiply(projectionMatrix, viewMatrix);
 }
 
 /** Draw to canvas */
 let prevNow: number | null = null;
 const render = (now: number) => {
+  if (paused) {
+    requestAnimationFrame(render);
+    return;
+  }
+  
   if (prevNow === null) prevNow = now;
   const dt = now - prevNow;
   prevNow = now;
@@ -146,19 +159,22 @@ const render = (now: number) => {
   gl.enable(gl.CULL_FACE); // do not draw faces that are facing "backwards"
   gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
 
+  // gl.uniform3fv(lightDirectionUniformLocation, new Float32Array([-1, -1, -1]));
+  gl.uniform3fv(lightDirectionUniformLocation, new Float32Array([Math.sin(now * 0.0013), Math.sin(now * 0.0017), -Math.sin(now * 0.00023)]));
+
   // draw all fs
   for (let i = 0; i < NUM_OF_FS; i++) {
     const rotationPercentage = i / NUM_OF_FS;
     const rotation = rotationPercentage * Math.PI * 2;
     const x = Math.cos(rotation) * F_RADIUS;
     const z = Math.sin(rotation) * F_RADIUS;
-    const fMatrix = matrix4x4.translate(viewProjectionMatrix, x, 0, z);
-    gl.uniformMatrix4fv(matrixUniformLocation, false, fMatrix);
+    const fMatrix = matrix4x4.translate(worldViewProjectionMatrix, x, 0, z);
+    gl.uniformMatrix4fv(worldViewProjectionMatrixLocation, false, fMatrix);
 
     // draw
     const primitiveType = gl.TRIANGLES; // draws a triangle after shader is run every 3 times
     const offset = 0;
-    const count = letter_f_3d_vertices.length / 3;
+    const count = letterF3DVertices.length / 3;
     gl.drawArrays(primitiveType, offset, count);
   }
 
@@ -233,8 +249,10 @@ const initInputs = () => {
     const backdrop = document.querySelector('#backdrop') as HTMLDivElement;
     if (document.pointerLockElement === canvas) {
       backdrop.classList.add('hide');
+      paused = false;
     } else {
       backdrop.classList.remove('hide');
+      paused = true;
     }
   });
 
@@ -243,7 +261,6 @@ const initInputs = () => {
     const px = e.movementX / width;
     const py = -e.movementY / height;
     updateCamera(px, py);
-    updateMatrix();
   }
 
   // allow "zooming"

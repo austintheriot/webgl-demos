@@ -1,4 +1,4 @@
-export const letter_f_3d_vertices = [
+export const letterF3DVertices = [
  // left column front
  0,   0,  0,
  0, 0.5,  0,
@@ -128,7 +128,7 @@ export const letter_f_3d_vertices = [
  0, 0.5,   0
 ];
 
-export const letter_f_3d_colors = [
+export const letterF3DColors = [
   // left column front
   200, 70, 120,
   200, 70, 120,
@@ -256,4 +256,134 @@ export const letter_f_3d_colors = [
   160, 160, 220,
   160, 160, 220,
   160, 160, 220
+]
+
+export const letterF3DNormals = [
+  // left column front
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+
+  // top rung front
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+
+  // middle rung front
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+
+  // left column back
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+
+  // top rung back
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+
+  // middle rung back
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+
+  // top
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+
+  // top rung right
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+
+  // under top rung
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+
+  // between top rung and middle
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+
+  // top of middle rung
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+
+  // right of middle rung
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+
+  // bottom of middle rung.
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+
+  // right of bottom
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+
+  // bottom
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+
+  // left side
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0
 ]

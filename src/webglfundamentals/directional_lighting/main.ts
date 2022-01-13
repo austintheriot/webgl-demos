@@ -1,5 +1,5 @@
 import { crossVec3, normalizeVec3, subtractVec3 } from "../../utils";
-import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, Vec3 } from "../utils";
+import { addVec3, clamp, createProgram, createShader, degreesToRadians, err, matrix4x4, multiplyVec3, resizeCanvasToDisplaySize, stripYVec3, Vec3 } from "../utils";
 import { letterF3DColors, letterF3DVertices, letterF3DNormals } from "./data";
 import vertexShaderSource from './vertex.glsl?raw';
 import fragmentShaderSource from './fragment.glsl?raw';
@@ -29,12 +29,12 @@ const controlsDownMap = {
   shift: false,
 };
 const LOOK_SENSITIVITY = 120;
-const VELOCITY_SENSITIVITY = 0.0005;
+const VELOCITY_SENSITIVITY = 0.00015;
 const VELOCITY_DAMPING = 0.9;
 let pitch = 0;
 let yaw = -90; // turn from looking "down" the x axis to looking "up" the z-axis
 let cameraVelocity: Vec3 = [0, 0, 0];
-let cameraPos: Vec3 = [0, 0.1, 2];
+let cameraPos: Vec3 = [0, 0.3, 2];
 let cameraFront: Vec3 = [0, 0, -1]; // start out "straight ahead"
 let cameraUp: Vec3 = [0, 1, 0];
 let paused = true;
@@ -89,7 +89,7 @@ const main = async () => {
   updateMatrix();
 
   // RENDER //////////////////////////////////////////////////////////////////
-  requestAnimationFrame(render);
+  requestAnimationFrame((now) => render(now, true));
 }
 
 /** Using dt to scale position ensures that users who 
@@ -101,16 +101,18 @@ const updatePosition = (dt: number) => {
 }
 
 const updateVelocity = () => {
-  if (controlsDownMap.w) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(cameraFront, VELOCITY_SENSITIVITY));
-  if (controlsDownMap.a) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
-  if (controlsDownMap.s) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(cameraFront, VELOCITY_SENSITIVITY));
-  if (controlsDownMap.d) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY));
-  if (controlsDownMap.space) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
-  if (controlsDownMap.shift) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
-
   cameraVelocity[0] *= VELOCITY_DAMPING;
   cameraVelocity[1] *= VELOCITY_DAMPING;
   cameraVelocity[2] *= VELOCITY_DAMPING;
+
+  if (controlsDownMap.w) cameraVelocity = addVec3(cameraVelocity, stripYVec3(multiplyVec3(cameraFront, VELOCITY_SENSITIVITY)));
+  if (controlsDownMap.a) cameraVelocity = subtractVec3(cameraVelocity, stripYVec3(multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY)));
+  if (controlsDownMap.s) cameraVelocity = subtractVec3(cameraVelocity, stripYVec3(multiplyVec3(cameraFront, VELOCITY_SENSITIVITY)));
+  if (controlsDownMap.d) cameraVelocity = addVec3(cameraVelocity, stripYVec3(multiplyVec3(normalizeVec3(crossVec3(cameraFront, cameraUp)), VELOCITY_SENSITIVITY)));
+
+  // limit to side-to-side
+  // if (controlsDownMap.space) cameraVelocity = addVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
+  // if (controlsDownMap.shift) cameraVelocity = subtractVec3(cameraVelocity, multiplyVec3(normalizeVec3(cameraUp), VELOCITY_SENSITIVITY));
 }
 
 const updateCamera = (px = 0, py: number = 0) => {
@@ -135,12 +137,14 @@ const updateMatrix = () => {
 
 /** Draw to canvas */
 let prevNow: number | null = null;
-const render = (now: number) => {
-  if (paused) {
+let lightOffset = 0;
+const render = (now: number, override = false) => {
+  if (paused && !override) {
     requestAnimationFrame(render);
     return;
   }
   
+  lightOffset += 0.001;
   if (prevNow === null) prevNow = now;
   const dt = now - prevNow;
   prevNow = now;
@@ -160,7 +164,7 @@ const render = (now: number) => {
   gl.enable(gl.DEPTH_TEST); // draw closest pixels over farthest pixels
 
   // gl.uniform3fv(lightDirectionUniformLocation, new Float32Array([-1, -1, -1]));
-  gl.uniform3fv(lightDirectionUniformLocation, new Float32Array([Math.sin(now * 0.0013), Math.sin(now * 0.0017), -Math.sin(now * 0.00023)]));
+  gl.uniform3fv(lightDirectionUniformLocation, new Float32Array([Math.sin(lightOffset * 13), Math.sin(lightOffset * 17), -Math.sin(lightOffset * 23)]));
 
   // draw all fs
   for (let i = 0; i < NUM_OF_FS; i++) {
@@ -267,6 +271,10 @@ const initInputs = () => {
   window.onwheel = (e) => {
     fieldOfViewRadians += 0.01 * Math.sign(e.deltaY);
     fieldOfViewRadians = clamp(Math.PI / 16, fieldOfViewRadians, Math.PI / 2); // 11 degrees -> 90 deg
+  }
+
+  window.onresize = () => {
+    requestAnimationFrame((now) => render(now, true));
   }
 }
 

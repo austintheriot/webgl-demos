@@ -187,6 +187,11 @@ export const multiplyVec3 = (vec: Vec3, n: number): Vec3 => {
   return [vec[0] * n, vec[1] * n, vec[2] * n];
 };
 
+/** Change y component to 0 */
+export const stripYVec3 = (vec: Vec3): Vec3 => {
+  return [vec[0], 0, vec[2]];
+};
+
 /** Normalizes a vector to length of 1 */
 export const normalizeVec3 = (v: Vec3): Vec3 => {
   const length = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
